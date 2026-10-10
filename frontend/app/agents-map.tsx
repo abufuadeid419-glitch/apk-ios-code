@@ -44,7 +44,7 @@ export default function AgentsMapScreen() {
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="agents-map-screen">
       <Header
         title="الخريطة الحية للموزعين"
-        subtitle="مواقع الموزعين وخطوط السير — مباشرة عبر Convex"
+        subtitle="مواقع الموزعين وخطوط السير — مباشرة"
         right={<IconBtn testID="agents-map-back" icon="arrow-forward" onPress={() => router.back()} />}
       />
       <Segments value={tab} onChange={setTab} options={[{ key: "map", label: "الخريطة" }, { key: "routes", label: `خطوط سير اليوم` }]} />
@@ -109,7 +109,7 @@ export default function AgentsMapScreen() {
               ))
             )}
             <T v="caption" color="muted" style={{ textAlign: "center" }}>
-              تُقرأ خطوط السير مباشرة من Convex · إجمالي زيارات اليوم {agents.reduce((n: number, a: any) => n + (a.today_visits?.length || 0), 0)} · مبيعات{" "}
+              تحديث مباشر · إجمالي زيارات اليوم {agents.reduce((n: number, a: any) => n + (a.today_visits?.length || 0), 0)} · مبيعات{" "}
               {money(agents.reduce((n: number, a: any) => n + (a.today_visits || []).reduce((m: number, v: any) => m + (v.total || 0), 0), 0))}
             </T>
           </>

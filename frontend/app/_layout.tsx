@@ -47,7 +47,7 @@ function Gate() {
       (seg === "upgrade" && user?.role === "OWNER") ||
       seg === "legal" ||
       seg === "goodbye" ||
-      seg === "convex-check" ||
+      false ||
       (seg === "agents-map" && target === "owner");
     if (seg !== target && !allowed) router.replace(`/${target}` as any);
   }, [user, segments, router]);

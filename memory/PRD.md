@@ -9,7 +9,7 @@
 - Database: connect to the user's EXISTING Convex deployment `fearless-ostrich-878`
   (URL + deploy key provided) with its real data — do NOT wipe/reseed.
 - Arabic RTL (like the original).
-- Developer (super-admin) phone +963984644375 — must NOT appear in the codebase
+- Developer (super-admin) phone [REDACTED] — must NOT appear in the codebase
   (stored only in Convex env var `DEVELOPER_PHONES`).
 
 ## What this app is
@@ -39,7 +39,7 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
 - Copied the full repo frontend (app/, src/, convex/, constants/, assets/, scripts/, app.json,
   package.json, tsconfig) and the backend stub into /app; preserved protected .env packager vars.
 - Pointed frontend at the live Convex deployment; `yarn install` (adds `convex` client etc).
-- Verified the deployment is live and fully configured (Bird key, DEVELOPER_PHONES=+963984644375,
+- Verified the deployment is live and fully configured (Bird key, DEVELOPER_PHONES=[REDACTED],
   OTP_PEPPER all present via `npx convex env list`).
 - Verified end-to-end:
   - Convex HTTP root `GET /api/` → "Smart System API (Convex)"; `GET /api/auth/me` (no token) → 401.

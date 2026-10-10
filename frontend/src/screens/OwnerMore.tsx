@@ -153,12 +153,11 @@ export default function OwnerMore() {
           <>
             <OrgProfile />
             <OrgSettings />
-            <Btn testID="open-convex-check-button" variant="secondary" icon="cloud-outline" title="فحص Convex (تجريبي)" onPress={() => router.push("/convex-check" as any)} />
           </>
         ) : tab === "tracking" ? (
           tracking.isLoading ? <Loading /> : (
             <ProLock testID="lock-tracking" feature="تتبع الموزعين المباشر">
-              <Btn testID="open-agents-map-button" icon="map-outline" title="الخريطة الحية (Convex · لحظي)" onPress={() => router.push("/agents-map" as any)} />
+              <Btn testID="open-agents-map-button" icon="map-outline" title="الخريطة الحية" onPress={() => router.push("/agents-map" as any)} />
               <AgentsMap agents={tracking.data ?? []} />
             </ProLock>
           )
