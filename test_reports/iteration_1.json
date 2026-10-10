@@ -1,0 +1,50 @@
+{
+  "summary": "Backend (Convex HTTP) + frontend sanity testing complete. 35/35 pytest cases pass against https://fearless-ostrich-878.eu-west-1.convex.site/api including unauth 401, Arabic 400 for invalid phone, role-scoped read-only GETs for owner/acct/agent/dev. Frontend login screen renders Arabic RTL. DEV role dashboard works via injected session_token; OWNER/ACCT/AGENT are blocked by expired-subscription screen (/blocked) because test org org_test_1 has no active plan.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Role dashboards for OWNER / ACCOUNTANT / FIELD_AGENT",
+        "issue": "After injecting valid seeded bearer tokens into localStorage key 'session_token', the app routes all three roles to /blocked with 'انتهى اشتراك المؤسسة' (subscription expired). Only DEVELOPER reaches its dashboard (/dev). Need to seed org_test_1 with an active subscription/plan so the role tabs can actually render and be verified.",
+        "affected_testIDs": ["login-hero"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "login",
+        "issues": [
+          "Phone field accepts non-numeric country code: typing '123' into local part caused display '+123' in the country-code box; add client-side length/digit validation before submit (backend 400 still fires, so not a security issue, just UX)."
+        ]
+      }
+    ],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_convex_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Seed/renew subscription for test org org_test_1 so OWNER/ACCT/AGENT tokens can reach their dashboards (currently /blocked). Likely means setting org.plan_id + plan_expires_at (or equivalent) to a future date in Convex DB.",
+    "(Optional UX) Tighten phone validation on login so country code field only accepts the predefined prefix and local number length matches 9 digits before enabling CTA."
+  ],
+  "critical_code_review_comments": [
+    "convex/http.ts statusFor() uses Arabic substring matching to pick HTTP codes (مصرح→401, صلاحية→403, غير موجود→404). Works but fragile; a typed error tag would be more robust.",
+    "src/api.ts throws generic Error('حدث خطأ غير متوقع') when detail is not a string — fine but loses the original status code for callers."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_convex_api.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (35/35)",
+    "frontend": "25% (1/4 role dashboards reachable; login screen renders)"
+  },
+  "seed_data_creation": "None. Only read-only GETs executed against org_test_1 with seeded tokens.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend Convex API is healthy at https://fearless-ostrich-878.eu-west-1.convex.site/api — reuse /app/backend/tests/test_convex_api.py for regression. For frontend role testing, inject token with: localStorage.setItem('session_token', JSON.stringify('<token>')) then reload. AsyncStorage web backend = localStorage, JSON-stringified. Tokens: test_token_dev/owner/acct/agent. Currently only DEV reaches dashboard; the other three hit /blocked (subscription expired) — must be fixed in Convex seed before frontend role flows can be verified.",
+  "rca_of_issue": "RCA for /blocked redirect: convex query api.extra.me returns user+org; _layout logic routes to /blocked when org has no active plan or plan_expires_at <= now. The seeded org org_test_1 was created without (or with an already-expired) subscription, so every non-DEV role hits the subscription-expired guard. Mitigation: in Convex dashboard or via a dev mutation, set org_test_1 plan to any active plan with plan_expires_at = now + 1 year, or run a seed script that creates/attaches an active trial. DEV role bypasses the check because it's a platform role not tied to org subscription."
+}
