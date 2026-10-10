@@ -7,7 +7,7 @@ import { Monitoring } from "@/src/components/Monitoring";
 import { AccountButton } from "@/src/components/AccountButton";
 import { useApi, useBottomChrome, useMutate } from "@/src/hooks";
 import { spacing, useTheme } from "@/src/theme";
-import { Badge, Btn, Card, Empty, ErrorBox, Field, Header, IconBtn, Loading, Row, Sheet, Stat, T, useToast } from "@/src/ui";
+import { Badge, Btn, Card, Empty, ErrorBox, Field, Header, HeaderIconBtn, IconBtn, Loading, Row, Sheet, Stat, T, useToast } from "@/src/ui";
 
 export function DevHome() {
   const { colors } = useTheme();
@@ -48,7 +48,7 @@ export function DevLicenses() {
   };
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="dev-licenses-screen">
-      <Header title="التراخيص" subtitle={`${q.data?.length ?? 0} ترخيص`} right={<IconBtn testID="add-license-button" icon="add" tone="brand" onPress={() => setForm({ org_name: "", days: "365", max_employees: "10" })} />} />
+      <Header title="التراخيص" subtitle={`${q.data?.length ?? 0} ترخيص`} right={<HeaderIconBtn testID="add-license-button" icon="add" onPress={() => setForm({ org_name: "", days: "365", max_employees: "10" })} />} />
       {q.isLoading ? <Loading /> : (
         <FlatList
           data={q.data}

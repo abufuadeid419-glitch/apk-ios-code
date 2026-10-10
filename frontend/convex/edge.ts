@@ -151,13 +151,23 @@ export const checkOtp = internalMutation({
   },
 });
 
+// Hashed-phone comparison for developer accounts.
+// Phones are never stored or compared in plain text: sha256(pepper:phone).
+async function hashPhone(phone: string) {
+  const data = new TextEncoder().encode(`${process.env.OTP_PEPPER ?? ""}:${phone}`);
+  const d = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(d)).map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
 // Find-or-create the user by verified phone and open a 30-day session.
 async function openSession(ctx: any, phone: string, session_token: string) {
   {
     // (block kept for indentation parity with the former mutation handler)
-    // Developer accounts come ONLY from the Convex deployment env var DEVELOPER_PHONES.
-    const devPhones = (process.env.DEVELOPER_PHONES ?? "").split(",").map((p) => p.trim()).filter(Boolean);
-    const isDev = devPhones.includes(phone);
+    // Developer accounts are identified by HASHED phone, listed in the Convex
+    // deployment env var DEVELOPER_PHONES_HASH (comma-separated sha256(pepper:phone)
+    // hex). The plaintext phone is NEVER stored in env or code.
+    const devHashes = (process.env.DEVELOPER_PHONES_HASH ?? "").split(",").map((p) => p.trim().toLowerCase()).filter(Boolean);
+    const isDev = devHashes.length > 0 && devHashes.includes((await hashPhone(phone)).toLowerCase());
     const existing = await ctx.db.query("users").withIndex("by_phone", (q: any) => q.eq("phone", phone)).unique();
     let user_id: string;
     if (existing) {

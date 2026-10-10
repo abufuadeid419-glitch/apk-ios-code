@@ -49,7 +49,7 @@ export default function ConvexCheck() {
       await create({ token, name: name.trim(), sale_price: +price || 0 });
       setName("");
       setPrice("");
-      toast("أُضيف إلى Convex ✓ — لاحظ تحديث البطاقات فوراً");
+      toast("تمت الإضافة ✓ — ستُحدَّث البطاقات فوراً");
     } catch (e: any) {
       toast(e.message ?? "فشل", "error");
     } finally {
@@ -59,13 +59,13 @@ export default function ConvexCheck() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="convex-check-screen">
-      <Header title="لوحة Convex الحيّة" subtitle="الأرقام تُقرأ من Convex وتتحدّث لحظياً" />
+      <Header title="لوحة البيانات الحيّة" subtitle="الأرقام تُحدَّث لحظياً" />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
         {!ready || overview === undefined ? (
           <Loading />
         ) : (
           <>
-            <T v="h2">نظرة عامة (stats.overview)</T>
+            <T v="h2">نظرة عامة</T>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.md }}>
               <Stat testID="cc-stat-sales" icon="cash-outline" label="إجمالي المبيعات" value={money(overview.sales_total)} tone="brand" />
               <Stat testID="cc-stat-today" icon="today-outline" label="مبيعات اليوم" value={money(overview.today_sales)} tone="info" />
@@ -79,7 +79,7 @@ export default function ConvexCheck() {
               <Stat icon="people-outline" label="العملاء" value={String(overview.customers)} tone="info" />
             </View>
 
-            <T v="h2">ترتيب الموزعين (stats.leaderboard · {board?.month ?? "—"})</T>
+            <T v="h2">ترتيب الموزعين · {board?.month ?? "—"}</T>
             {board === undefined ? (
               <Loading />
             ) : board.agents.length === 0 ? (
@@ -98,7 +98,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">الخريطة الحية للمندوبين (tracking.agents)</T>
+            <T v="h2">الخريطة الحية للمندوبين</T>
             {tracking === undefined ? (
               <Loading />
             ) : tracking.length === 0 ? (
@@ -122,7 +122,7 @@ export default function ConvexCheck() {
             )}
             <T v="caption" color="muted">خريطة المسار الكاملة تظهر داخل تطبيق الجوال (نسخة مبنية).</T>
 
-            <T v="h2">مخزون الموزعين (distributorsInventory)</T>
+            <T v="h2">مخزون الموزعين</T>
             {distInventory === undefined ? (
               <Loading />
             ) : distInventory.length === 0 ? (
@@ -135,7 +135,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">آخر الشحنات (deliveries.list)</T>
+            <T v="h2">آخر الشحنات</T>
             {deliveries === undefined ? (
               <Loading />
             ) : deliveries.length === 0 ? (
@@ -148,7 +148,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">الموظفون (employees.list)</T>
+            <T v="h2">الموظفون</T>
             {employees === undefined ? (
               <Loading />
             ) : (
@@ -161,7 +161,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">خطوط السير (routes.list · حيّ)</T>
+            <T v="h2">خطوط السير · حيّ</T>
             {routes === undefined ? (
               <Loading />
             ) : routes.length === 0 ? (
@@ -174,7 +174,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">سندات الصرف (vouchers.list · حيّ)</T>
+            <T v="h2">سندات الصرف · حيّ</T>
             {vouchers === undefined ? (
               <Loading />
             ) : vouchers.length === 0 ? (
@@ -187,7 +187,7 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">المشتريات (purchases.list · حيّ)</T>
+            <T v="h2">المشتريات · حيّ</T>
             {purchases === undefined ? (
               <Loading />
             ) : purchases.length === 0 ? (
@@ -200,18 +200,18 @@ export default function ConvexCheck() {
               </Card>
             )}
 
-            <T v="h2">إضافة منتج (Convex mutation)</T>
+            <T v="h2">إضافة منتج</T>
             <Card style={{ gap: spacing.md, borderColor: colors.brandPrimary }}>
               <Field testID="cc-name-input" label="اسم المنتج" value={name} onChangeText={setName} />
               <Field testID="cc-price-input" label="سعر البيع" keyboardType="decimal-pad" value={price} onChangeText={setPrice} />
-              <Btn testID="cc-add-button" title="إضافة عبر Convex" icon="add" loading={busy} onPress={add} />
+              <Btn testID="cc-add-button" title="إضافة" icon="add" loading={busy} onPress={add} />
             </Card>
 
-            <T v="h2">المنتجات (products.list · حيّ)</T>
+            <T v="h2">المنتجات · حيّ</T>
             {products === undefined ? (
               <Loading />
             ) : products.length === 0 ? (
-              <Empty icon="cube-outline" text="لا توجد منتجات في Convex بعد" />
+              <Empty icon="cube-outline" text="لا توجد منتجات بعد" />
             ) : (
               <Card style={{ padding: 0, overflow: "hidden" }}>
                 {products.map((p: any) => (
@@ -227,7 +227,7 @@ export default function ConvexCheck() {
                 ))}
               </Card>
             )}
-            <T v="caption" color="muted">اضغط على أي منتج لحذفه. كل البطاقات أعلاه تتحدّث تلقائياً عبر Convex.</T>
+            <T v="caption" color="muted">اضغط على أي منتج لحذفه. البطاقات أعلاه تتحدّث تلقائياً.</T>
           </>
         )}
         <Btn testID="cc-back-button" variant="ghost" title="رجوع" onPress={() => router.back()} />

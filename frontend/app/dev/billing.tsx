@@ -5,7 +5,7 @@ import { fmtDate, money } from "@/src/api";
 import { AccountButton } from "@/src/components/AccountButton";
 import { useApi, useBottomChrome, useMutate } from "@/src/hooks";
 import { spacing, useTheme } from "@/src/theme";
-import { Badge, Btn, Card, Empty, Field, Header, IconBtn, Loading, Segments, Sheet, T, useToast } from "@/src/ui";
+import { Badge, Btn, Card, Empty, Field, Header, HeaderIconBtn, IconBtn, Loading, Segments, Sheet, T, useToast } from "@/src/ui";
 
 const blankPlan = { name: "", price: "", yearly_price: "", currency: "USD", days: "30", max_employees: "5", features: "", active: true };
 
@@ -39,7 +39,7 @@ export default function DevBilling() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="dev-billing-screen">
-      <Header title="الاشتراكات" subtitle={`${pending} طلب بانتظار المراجعة`} right={<>{tab === "plans" && <IconBtn testID="add-plan-button" icon="add" tone="brand" onPress={() => setPlan(blankPlan)} />}<AccountButton /></>} />
+      <Header title="الاشتراكات" subtitle={`${pending} طلب بانتظار المراجعة`} right={<>{tab === "plans" && <HeaderIconBtn testID="add-plan-button" icon="add" onPress={() => setPlan(blankPlan)} />}<AccountButton /></>} />
       <Segments value={tab} onChange={setTab} options={[{ key: "requests", label: "طلبات الترقية" }, { key: "plans", label: "الخطط" }, { key: "payment", label: "إعدادات الدفع" }]} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: bottom + spacing.xl }} refreshControl={<RefreshControl refreshing={reqs.isRefetching} onRefresh={() => { reqs.refetch(); plans.refetch(); }} tintColor={colors.brandPrimary} />}>
         {tab === "requests" &&

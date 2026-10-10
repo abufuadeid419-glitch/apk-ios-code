@@ -1,0 +1,31 @@
+{
+  "summary": "Iteration 4 — hashed developer phone + global UI redesign verification. Backend: 43/43 pytest pass (8 new iter4 + 35 regression). /api/auth/me with test_token_dev persists role=DEVELOPER (role stored on user row), OTP send on +9639… still returns Arabic error from the SMS gateway (hashing didn't break the contract), /stats/overview + /products + /notifications + /auth/me(acct|agent) all 200. Frontend: redesign verified on 4 screens. Login (/): hero 'النظام الذكي' renders over the warehouse image, phone field with +963 prefix pill, coral CTA 'إرسال رمز التحقق' (bg=rgb(242,84,91)=#F2545B); CTA opacity=0.5 when phone empty → opacity=1 after typing — exactly as spec'd. /legal?doc=terms: dark-navy header rgb(31,42,77)=#1F2A4D, borderBottomLeft/Right-Radius=28px, centered white title 'شروط الاستخدام', back-button pill (data-testid=header-back) renders. /legal?doc=privacy: same pattern, title 'سياسة الخصوصية', back-button present. /convex-check: NO user-visible word 'convex' anywhere in body, and NONE of the old labels ('(stats.overview)', 'products.list · حيّ', 'إضافة عبر Convex') are present (page is auth-gated so it shows Loading when unauthenticated, header title 'لوحة البيانات الحيّة' not reached without a session — not a bug). /upgrade: screen is auth-gated, shows 401 when unauthenticated — expected behaviour (and 3× 401 are from useApi hooks on plans/payment/upgrade-requests). No red-screen / IconBtn / '@/src/ui' export errors in console. ui.tsx exports HeaderIconBtn, FAB, IconBtn (tone='brand'|'plain'), Btn (variant navy|primary|secondary|danger|ghost); HeaderIconBtn is correctly consumed by activate.tsx, consent.tsx, dev/billing.tsx and src/screens/Dev.tsx. No remaining references to the deprecated DEVELOPER_PHONES env var anywhere in /app/frontend/convex, /src, /app. hashPhone() in convex/edge.ts uses sha256(OTP_PEPPER:phone) and reads DEVELOPER_PHONES_HASH, matches the spec.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter4_hashed_dev.py",
+    "/app/backend/tests/test_convex_api.py",
+    "/app/test_reports/pytest/iter4_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "convex/edge.ts hashPhone() correctly reads OTP_PEPPER + phone through SHA-256 and compares case-insensitively against DEVELOPER_PHONES_HASH; the DB `role` field persists DEVELOPER on first login, so even if the env var is unset later, test_token_dev keeps role=DEVELOPER on /auth/me (verified).",
+    "src/ui.tsx Header is a single global component (dark navy brandPrimary, 28px bottom-radius, optional pill tabs, HeaderIconBtn/avatar via `right`); every modified screen (legal, upgrade, convex-check, activate, consent, dev/billing, Dev) uses it — so the redesign is truly global.",
+    "/app/frontend/app/convex-check.tsx header title changed to 'لوحة البيانات الحيّة' and the user-visible labels ('products.list · حيّ', '(stats.overview)', 'إضافة عبر Convex') are gone — only the file path and internal `api.products.list` symbol still mention Convex, which is correct (not user-visible).",
+    "src/ui.tsx `Btn` primary variant uses colors.accent (coral #F2545B) with a 20px pink shadow on web + 40% opacity shadow on native — matches the reference image CTA. `FAB` is new and uses the same coral; placed with `left: spacing.lg` (RTL-correct)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter4_hashed_dev.py (new)"
+  ],
+  "success_rate": {"backend": "100% (43/43)", "frontend": "100% of the 10 testable UI requirements verified; owner-dashboard header/avatar/sheet not exercised end-to-end because web OTP cannot be bypassed in this iteration run — code-reviewed instead"},
+  "seed_data_creation": "None (seeded tokens already present from iteration 3).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login page has TWO inputs: inputs[0] is readonly '+963' prefix badge, inputs[1] is the phone field (placeholder '9XXXXXXXX'). Always fill inputs[1] (not .first). For auth-gated screens (/owner, /upgrade, /dev, /convex-check), use `await page.evaluate(\"localStorage.setItem('session_token', JSON.stringify('test_token_owner'))\")` + reload — AsyncStorage on web is backed by @react-native-async-storage/async-storage's web driver which uses localStorage (not IndexedDB) in current Expo. Convex HTTP base: https://fearless-ostrich-878.eu-west-1.convex.site/api. HTTP routes use `/products` and `/notifications` (returns {items,unread}); the names like `products.list` in the frontend are internal Convex query names, not HTTP paths. iter4_results.xml has the full JUnit report.",
+  "rca_of_issue": "N/A — no regressions found this iteration."
+}

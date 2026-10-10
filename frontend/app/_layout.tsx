@@ -76,7 +76,7 @@ export default function RootLayout() {
           <KeyboardProvider>
             <AuthProvider>
               <ToastProvider>
-                <StatusBar style="dark" />
+                <StatusBar style="light" />
                 <UpdateGate>
                   <Gate />
                 </UpdateGate>

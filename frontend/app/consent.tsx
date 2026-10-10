@@ -7,7 +7,7 @@ import { api } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { PRIVACY, TERMS } from "@/src/legal";
 import { radius, spacing, useTheme } from "@/src/theme";
-import { Btn, Card, Header, IconBtn, Ionicons, T, useToast } from "@/src/ui";
+import { Btn, Card, Header, HeaderIconBtn, IconBtn, Ionicons, T, useToast } from "@/src/ui";
 
 export default function Consent() {
   const { setUser, logout } = useAuth();
@@ -29,7 +29,7 @@ export default function Consent() {
   };
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="consent-screen">
-      <Header title="الموافقة على الشروط" right={<IconBtn testID="consent-logout-button" icon="log-out-outline" onPress={logout} />} />
+      <Header title="الموافقة على الشروط" right={<HeaderIconBtn testID="consent-logout-button" icon="log-out-outline" onPress={logout} />} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
         <Card style={{ maxHeight: 260 }}>
           <ScrollView nestedScrollEnabled><T v="caption" style={{ lineHeight: 22 }}>{TERMS}{"\n\n"}{PRIVACY}</T></ScrollView>

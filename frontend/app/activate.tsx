@@ -8,7 +8,7 @@ import { api } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { KeyboardScreen } from "@/src/components/KeyboardScreen";
 import { spacing, useTheme } from "@/src/theme";
-import { Btn, Card, Field, Header, IconBtn, T, useToast } from "@/src/ui";
+import { Btn, Card, Field, Header, HeaderIconBtn, IconBtn, T, useToast } from "@/src/ui";
 
 export default function Activate() {
   const { user, setUser, logout } = useAuth();
@@ -62,7 +62,7 @@ export default function Activate() {
     <KeyboardScreen
       testID="activation-screen"
       backgroundColor={colors.surfaceSecondary}
-      header={<Header title="تفعيل الحساب" subtitle={user?.email} right={<IconBtn testID="activation-logout-button" icon="log-out-outline" onPress={logout} />} />}
+      header={<Header title="تفعيل الحساب" subtitle={user?.email} right={<HeaderIconBtn testID="activation-logout-button" icon="log-out-outline" onPress={logout} />} />}
       contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
     >
         <Card style={{ gap: spacing.md }}>

@@ -53,6 +53,11 @@ const light = {
   onBrandSecondary: "#0F1631",
   brandTertiary: "#E8ECF7",
   onBrandTertiary: "#1F2A4D",
+  // Coral accent used for primary CTAs / FABs (see reference image).
+  accent: "#F2545B",
+  onAccent: "#FFFFFF",
+  accentSoft: "#FDE6E7",
+  onAccentSoft: "#B23A41",
   success: "#2E7D32",
   onSuccess: "#FFFFFF",
   warning: "#C25700",
@@ -63,12 +68,15 @@ const light = {
   onInfo: "#FFFFFF",
   border: "#E4E4E7",
   borderStrong: "#D4D4D8",
-  divider: "#E4E4E7",
+  divider: "#EEF1F7",
   muted: "#71717A",
   onBrand: "#FFFFFF",
   overlay: "rgba(0,0,0,0.4)",
   pro: "#F2545B",
   onPro: "#FFFFFF",
+  // Deep-navy strip used inside the dark header (unselected tab background etc).
+  headerDeep: "#141B36",
+  onHeaderDeep: "#B8C1DE",
 };
 
 export type ThemeColors = typeof light;
@@ -89,6 +97,11 @@ const dark: ThemeColors = {
   onBrandSecondary: "#E8ECF7",
   brandTertiary: "#1A2142",
   onBrandTertiary: "#C9D2EC",
+  // Coral accent used for primary CTAs / FABs (see reference image).
+  accent: "#FF7A80",
+  onAccent: "#0B1024",
+  accentSoft: "#3A1F23",
+  onAccentSoft: "#FFB4B8",
   success: "#81C784",
   onSuccess: "#0E1226",
   warning: "#FFB74D",
@@ -105,6 +118,8 @@ const dark: ThemeColors = {
   overlay: "rgba(0,0,0,0.6)",
   pro: "#FF7A80",
   onPro: "#0E1226",
+  headerDeep: "#0A0F26",
+  onHeaderDeep: "#8792B4",
 };
 
 export const defaultScheme = "light" satisfies ColorScheme;
@@ -155,4 +170,4 @@ export function makeStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.Name
 
 export const fonts = { regular: "Cairo", semibold: "Cairo-SemiBold", bold: "Cairo-Bold" };
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
-export const radius = { sm: 6, md: 12, lg: 20, pill: 999 };
+export const radius = { sm: 6, md: 12, lg: 20, xl: 28, pill: 999 };

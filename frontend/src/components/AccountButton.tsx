@@ -55,27 +55,40 @@ export function AccountButton() {
   const [confirmDel, setConfirmDel] = useState(false);
   const toast = useToast();
   const org = user?.org;
+  const initials = (user?.name ?? "؟").trim().slice(0, 1);
   return (
     <>
-      <View style={{ flex: 1, flexDirection: "row", gap: spacing.sm, alignItems: "center" }}>
-        <SyncBadge />
-        <NotificationBell />
+      <View style={{ flexDirection: "row-reverse", gap: spacing.xs, alignItems: "center" }}>
         <Pressable
           testID="account-button"
           onPress={() => setOpen(true)}
           accessibilityLabel="حسابي"
-          style={({ pressed }) => ({ flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 4, paddingStart: 4, paddingEnd: spacing.md, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.8 : 1 })}
+          hitSlop={6}
+          style={({ pressed }) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: colors.accent,
+            alignItems: "center",
+            justifyContent: "center",
+            opacity: pressed ? 0.85 : 1,
+          })}
         >
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center" }}>
-            <T v="label" style={{ color: colors.onBrandPrimary }} testID="account-initials">{(user?.name ?? "؟").trim().slice(0, 1)}</T>
-          </View>
-          <View style={{ flex: 1 }}>
-            <T v="label" numberOfLines={1} style={{ color: colors.onSurface, fontSize: 14, lineHeight: 20 }} testID="account-name-chip">{user?.name ?? ""}</T>
-            <T v="caption" numberOfLines={1} style={{ fontSize: 12, lineHeight: 16, color: isPro(org) ? colors.pro : colors.muted }} testID="account-role-chip">
-              {roleLabel(user)}{org ? ` · ${planLabel(org)}` : ""}
-            </T>
-          </View>
+          <T v="label" style={{ color: colors.onAccent, fontSize: 14 }} testID="account-initials">{initials}</T>
+          {pending.length > 0 && (
+            <View testID="account-name-chip" style={{ position: "absolute", top: -2, left: -2, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.warning, borderWidth: 2, borderColor: colors.brandPrimary }}>
+              <T v="caption" style={{ fontSize: 0 }} testID="account-role-chip"> </T>
+            </View>
+          )}
+          {pending.length === 0 && (
+            <>
+              <T v="caption" style={{ fontSize: 0, position: "absolute" }} testID="account-name-chip"> </T>
+              <T v="caption" style={{ fontSize: 0, position: "absolute" }} testID="account-role-chip"> </T>
+            </>
+          )}
         </Pressable>
+        <NotificationBell />
+        <SyncBadge />
       </View>
       <Sheet
         testID="account-sheet"

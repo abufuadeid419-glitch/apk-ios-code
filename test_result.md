@@ -101,3 +101,113 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Redesign the whole mobile UI to match the reference image (dark-navy curved
+  top bar with pill-shaped tabs inside, soft blue-white content area, coral
+  round action buttons, rounded avatar list rows), remove any user-facing
+  "Convex" developer artefacts, and store the developer phone number hashed
+  (never plaintext in env or code). Arabic RTL stays as-is.
+
+backend:
+  - task: "Hash developer phone — DEVELOPER_PHONES_HASH"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/convex/edge.ts"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Added `hashPhone(phone)` helper (sha256(OTP_PEPPER:phone)). `openSession`
+          now reads `DEVELOPER_PHONES_HASH` (comma-separated hex sha256) and
+          promotes the user to DEVELOPER only when the hash of their verified
+          phone matches. Convex env `DEVELOPER_PHONES` has been removed and
+          `DEVELOPER_PHONES_HASH` set to the hash of the current developer phone
+          (deployed to fearless-ostrich-878). Needs backend retest: existing
+          seeded DEVELOPER token (`test_token_dev`) should still work via
+          /api/auth/me because the role was persisted on the user row; verifying
+          the hash promotion path requires a real OTP (not automatable).
+
+frontend:
+  - task: "UI redesign — dark navy header, coral CTAs, rounded rows"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/ui.tsx, /app/frontend/src/theme.ts, /app/frontend/src/components/AccountButton.tsx, NotificationBell.tsx, SyncBadge.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Theme: added `accent`/`onAccent` (coral #F2545B) and `headerDeep` /
+          `onHeaderDeep` tokens for both light and dark schemes; new radius.xl.
+          UI kit:
+            - Btn primary now coral with pill shape + soft coral shadow; added
+              `navy` variant for the old brandPrimary pills.
+            - Header rewritten: dark navy with large curved bottom corners,
+              centered white title, optional `onBack` prop (chevron pill), new
+              `tabs/tabValue/onTabChange` props for pill-shaped segmented tabs
+              INSIDE the dark area.
+            - New `HeaderIconBtn` and `FAB` components.
+            - Row component now supports `avatarText`/`avatarTone` for pastel
+              circular avatars; cleaner divider; subtle pressed state.
+            - Card: softer shadow, radius.lg, no border on light.
+            - Stat: softer tile with pastel icon chip.
+            - Badge/Section: refined.
+          Header-right slots updated: NotificationBell + SyncBadge rendered as
+          deep-navy pills with white icons; AccountButton is now a compact coral
+          initials circle. Reports/legal/upgrade/agents-map screens migrated to
+          the new `onBack` prop.
+          _layout.tsx: StatusBar switched to `light` for the new dark header.
+          Verified visually (login screen before/after and legal screen).
+  - task: "Remove user-facing 'Convex' labels + dev artefacts"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/convex-check.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Stripped every user-visible "Convex" string and raw function labels
+          like "(stats.overview)" / "products.list · حيّ" from the diagnostic
+          dashboard. Developer comments in TypeScript source still mention
+          Convex as the backend provider — not user-visible.
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 4
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Hash developer phone — DEVELOPER_PHONES_HASH"
+    - "UI redesign — dark navy header, coral CTAs, rounded rows"
+    - "Remove user-facing 'Convex' labels + dev artefacts"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      Three changes to validate:
+      (1) Backend: developer identification now uses hashed phone comparison
+          (`DEVELOPER_PHONES_HASH` env var). Confirm `/api/auth/me` with
+          `test_token_dev` still returns role=DEVELOPER (the role is persisted
+          on the users row from the original seed); confirm `DEVELOPER_PHONES`
+          is no longer referenced. All other APIs should be unaffected.
+      (2) Frontend redesign: validate the new dark-navy curved header with
+          centered title, back-button pill, coral primary CTAs with pill shape,
+          and rounded list rows render across login, legal, upgrade, reports,
+          activate, consent, and the owner/acct/agent dashboards. Nothing in
+          the UI should still say "Convex" to the user.
+      (3) Prefer visual + snapshot checks on web preview. Seeded tokens:
+          test_token_owner/_acct/_agent/_dev (see /app/memory/test_credentials.md).

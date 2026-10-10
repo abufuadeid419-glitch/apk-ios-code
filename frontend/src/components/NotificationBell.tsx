@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
-import { View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { api as cxApi } from "@/convex/_generated/api";
 import { fmtDate } from "@/src/api";
 import { useAuth } from "@/src/auth";
-import { spacing, useTheme } from "@/src/theme";
-import { Empty, IconBtn, Ionicons, IconName, Sheet, T } from "@/src/ui";
+import { fonts, radius, spacing, useTheme } from "@/src/theme";
+import { Empty, Ionicons, IconName, Sheet, T } from "@/src/ui";
 
 const icons: Record<string, IconName> = {
   low_stock: "warning-outline",
@@ -23,9 +23,7 @@ const icons: Record<string, IconName> = {
   target: "flag-outline",
 };
 
-// Real-time notification bell, read live from Convex (useQuery). The FastAPI
-// backend mirrors every notification into Convex as it is created (see
-// backend/convex_bridge.py → notify()), so the badge updates without polling.
+// Real-time notification bell. Styled as a deep-navy pill for the dark header.
 export function NotificationBell() {
   const { colors } = useTheme();
   const { token } = useAuth();
@@ -42,14 +40,30 @@ export function NotificationBell() {
 
   return (
     <>
-      <View>
-        <IconBtn testID="notifications-button" icon="notifications-outline" onPress={openSheet} />
+      <Pressable
+        testID="notifications-button"
+        onPress={openSheet}
+        hitSlop={6}
+        style={({ pressed }) => ({
+          width: 36,
+          height: 36,
+          borderRadius: radius.md,
+          backgroundColor: colors.headerDeep,
+          alignItems: "center",
+          justifyContent: "center",
+          opacity: pressed ? 0.75 : 1,
+        })}
+      >
+        <Ionicons name="notifications-outline" size={18} color={colors.onBrandPrimary} />
         {unread > 0 && (
-          <View testID="notifications-unread-badge" style={{ pointerEvents: "none", position: "absolute", top: 4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 }}>
-            <T v="caption" style={{ color: colors.onError, fontSize: 11, lineHeight: 16 }}>{unread > 9 ? "9+" : unread}</T>
+          <View
+            testID="notifications-unread-badge"
+            style={{ pointerEvents: "none", position: "absolute", top: -4, left: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 }}
+          >
+            <Text style={{ color: colors.onAccent, fontFamily: fonts.bold, fontSize: 11, lineHeight: 14 }}>{unread > 9 ? "9+" : unread}</Text>
           </View>
         )}
-      </View>
+      </Pressable>
       <Sheet testID="notifications-sheet" visible={open} onClose={() => setOpen(false)} title="الإشعارات">
         {!items.length ? (
           <Empty icon="notifications-off-outline" text="لا توجد إشعارات" />

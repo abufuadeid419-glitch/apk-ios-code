@@ -45,7 +45,7 @@ export default function AgentsMapScreen() {
       <Header
         title="الخريطة الحية للموزعين"
         subtitle="مواقع الموزعين وخطوط السير — مباشرة"
-        right={<IconBtn testID="agents-map-back" icon="arrow-forward" onPress={() => router.back()} />}
+        onBack={() => router.back()}
       />
       <Segments value={tab} onChange={setTab} options={[{ key: "map", label: "الخريطة" }, { key: "routes", label: `خطوط سير اليوم` }]} />
       <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}>

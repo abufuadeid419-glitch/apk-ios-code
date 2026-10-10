@@ -48,7 +48,7 @@ export default function Upgrade() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="upgrade-screen">
-      <Header title="ترقية الخطة" subtitle={org?.name} right={<IconBtn testID="upgrade-back-button" icon="arrow-forward" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} />} />
+      <Header title="ترقية الخطة" subtitle={org?.name} onBack={() => (router.canGoBack() ? router.back() : router.replace("/"))} />
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: insets.bottom + spacing.xl }}
         refreshControl={<RefreshControl refreshing={plans.isRefetching} onRefresh={() => { plans.refetch(); reqs.refetch(); refresh(); }} tintColor={colors.brandPrimary} />}

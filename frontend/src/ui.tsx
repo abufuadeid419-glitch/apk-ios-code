@@ -59,7 +59,7 @@ export function T({
 }
 
 // ---------------- Button ----------------
-type BtnVariant = "primary" | "secondary" | "danger" | "ghost";
+type BtnVariant = "primary" | "secondary" | "danger" | "ghost" | "navy";
 export function Btn({
   title,
   onPress,
@@ -83,12 +83,20 @@ export function Btn({
 }) {
   const { colors } = useTheme();
   const map = {
-    primary: [colors.brandPrimary, colors.onBrandPrimary],
+    // Primary CTA = coral accent (per reference image). Round pill, soft shadow.
+    primary: [colors.accent, colors.onAccent],
     secondary: [colors.brandTertiary, colors.onBrandTertiary],
+    navy: [colors.brandPrimary, colors.onBrandPrimary],
     danger: [colors.error, colors.onError],
     ghost: ["transparent", colors.brandPrimary],
   } as const;
   const [bg, fg] = map[variant];
+  const shadow: ViewStyle =
+    variant === "primary" && !disabled
+      ? Platform.OS === "web"
+        ? ({ boxShadow: "0px 8px 20px rgba(242,84,91,0.35)" } as ViewStyle)
+        : { shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 4 }
+      : {};
   return (
     <Pressable
       testID={testID}
@@ -107,9 +115,10 @@ export function Btn({
           alignItems: "center",
           justifyContent: "center",
           gap: spacing.sm,
-          opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
+          opacity: disabled ? 0.5 : pressed ? 0.9 : 1,
           transform: [{ scale: pressed ? 0.98 : 1 }],
         },
+        shadow,
         style,
       ]}
     >
@@ -152,19 +161,17 @@ export function Card({ children, style, onPress, testID }: { children: React.Rea
   const { colors, scheme } = useTheme();
   const base: ViewStyle = {
     backgroundColor: colors.surfaceSecondary,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radius.lg,
     padding: spacing.lg,
     ...(scheme === "light"
       ? Platform.OS === "web"
-        ? ({ boxShadow: "0px 2px 8px rgba(0,0,0,0.06)" } as ViewStyle)
-        : { shadowColor: colors.onSurface, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }
-      : {}),
+        ? ({ boxShadow: "0px 4px 14px rgba(31,42,77,0.06)" } as ViewStyle)
+        : { shadowColor: colors.onSurface, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 2 }
+      : { borderWidth: 1, borderColor: colors.border }),
   };
   if (!onPress) return <View testID={testID} style={[base, style]}>{children}</View>;
   return (
-    <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [base, style, { opacity: pressed ? 0.85 : 1 }]}>
+    <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [base, style, { opacity: pressed ? 0.9 : 1 }]}>
       {children}
     </Pressable>
   );
@@ -207,37 +214,215 @@ export function Field({ label, error, ...props }: TextInputProps & { label: stri
 }
 
 // ---------------- Header ----------------
-export function Header({ title, subtitle, right }: { title: string; subtitle?: string; right?: React.ReactNode }) {
+// Dark-navy header with large curved bottom corners (reference image).
+// Centered title, optional back / right icon buttons, and optional pill-shaped
+// segmented tabs rendered INSIDE the dark area (Chats/Status/Calls look).
+export function Header<K extends string = string>({
+  title,
+  subtitle,
+  right,
+  onBack,
+  tabs,
+  tabValue,
+  onTabChange,
+}: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  onBack?: () => void;
+  tabs?: { key: K; label: string }[];
+  tabValue?: K;
+  onTabChange?: (k: K) => void;
+}) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   return (
     <View
       style={{
-        paddingTop: insets.top + spacing.md,
+        paddingTop: insets.top + spacing.sm,
         paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.md,
-        backgroundColor: colors.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.divider,
+        paddingBottom: tabs?.length ? spacing.md : spacing.xl,
+        backgroundColor: colors.brandPrimary,
+        borderBottomLeftRadius: radius.xl,
+        borderBottomRightRadius: radius.xl,
         gap: spacing.md,
+        ...(Platform.OS === "web"
+          ? ({ boxShadow: "0px 10px 24px rgba(31,42,77,0.18)" } as ViewStyle)
+          : { shadowColor: "#000", shadowOpacity: 0.15, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 }),
       }}
     >
-      {!!right && <View testID="header-actions" style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexWrap: "wrap" }}>{right}</View>}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        <View style={{ width: 4, alignSelf: "stretch", borderRadius: radius.pill, backgroundColor: colors.brandPrimary }} />
-        <View style={{ flex: 1 }}>
-          <T v="title" testID="screen-title" numberOfLines={1}>{title}</T>
-          {!!subtitle && <T v="caption" numberOfLines={2}>{subtitle}</T>}
+      <View style={{ flexDirection: "row", alignItems: "center", minHeight: 44 }}>
+        {onBack ? (
+          <Pressable
+            testID="header-back"
+            onPress={onBack}
+            hitSlop={8}
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              borderRadius: radius.md,
+              backgroundColor: colors.headerDeep,
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Ionicons name="chevron-forward" size={18} color={colors.onBrandPrimary} />
+          </Pressable>
+        ) : (
+          <View style={{ width: 36 }} />
+        )}
+        <View style={{ flex: 1, alignItems: "center", paddingHorizontal: spacing.sm }}>
+          <Text
+            testID="screen-title"
+            numberOfLines={1}
+            style={{ color: colors.onBrandPrimary, fontFamily: fonts.bold, fontSize: 18 }}
+          >
+            {title}
+          </Text>
+          {!!subtitle && (
+            <Text
+              numberOfLines={1}
+              style={{ color: colors.onHeaderDeep, fontFamily: fonts.regular, fontSize: 12, marginTop: 2 }}
+            >
+              {subtitle}
+            </Text>
+          )}
+        </View>
+        <View testID="header-actions" style={{ flexDirection: "row-reverse", alignItems: "center", gap: spacing.xs, minWidth: 36, justifyContent: "flex-start" }}>
+          {right}
         </View>
       </View>
+      {!!tabs?.length && (
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.headerDeep,
+            borderRadius: radius.pill,
+            padding: 4,
+            gap: 2,
+          }}
+        >
+          {tabs.map((t) => {
+            const sel = t.key === tabValue;
+            return (
+              <Pressable
+                key={t.key}
+                testID={`header-tab-${t.key}`}
+                onPress={() => onTabChange?.(t.key)}
+                style={{
+                  flex: 1,
+                  minHeight: 36,
+                  borderRadius: radius.pill,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: sel ? colors.onBrandPrimary : "transparent",
+                }}
+              >
+                <Text
+                  style={{
+                    color: sel ? colors.brandPrimary : colors.onHeaderDeep,
+                    fontFamily: fonts.semibold,
+                    fontSize: 13,
+                  }}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
 
-// ---------------- Stat ----------------
-export function Stat({ label, value, icon, tone = "brand", testID }: { label: string; value: string; icon: IconName; tone?: "brand" | "success" | "warning" | "error" | "info"; testID?: string }) {
+// Compact dark-header icon button (for Header `right`). White tint, deep-navy pill.
+export function HeaderIconBtn({ icon, onPress, testID, badge }: { icon: IconName; onPress: () => void; testID?: string; badge?: number }) {
   const { colors } = useTheme();
-  const c = tone === "brand" ? colors.brandPrimary : colors[tone];
+  return (
+    <Pressable
+      testID={testID}
+      onPress={onPress}
+      hitSlop={6}
+      style={({ pressed }) => ({
+        width: 36,
+        height: 36,
+        borderRadius: radius.md,
+        backgroundColor: colors.headerDeep,
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: pressed ? 0.75 : 1,
+      })}
+    >
+      <Ionicons name={icon} size={18} color={colors.onBrandPrimary} />
+      {!!badge && badge > 0 && (
+        <View
+          style={{
+            position: "absolute",
+            top: -3,
+            left: -3,
+            minWidth: 16,
+            height: 16,
+            paddingHorizontal: 4,
+            borderRadius: 8,
+            backgroundColor: colors.accent,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ color: colors.onAccent, fontFamily: fonts.bold, fontSize: 10 }}>{badge > 9 ? "9+" : badge}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
+
+// ---------------- FAB ----------------
+// Coral round floating action button (bottom-right).
+export function FAB({ icon, onPress, testID, bottom }: { icon: IconName; onPress: () => void; testID?: string; bottom?: number }) {
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  return (
+    <Pressable
+      testID={testID}
+      onPress={() => {
+        haptic();
+        onPress();
+      }}
+      style={({ pressed }) => ({
+        position: "absolute",
+        left: spacing.lg,
+        bottom: (bottom ?? spacing.lg) + insets.bottom,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: colors.accent,
+        alignItems: "center",
+        justifyContent: "center",
+        opacity: pressed ? 0.9 : 1,
+        transform: [{ scale: pressed ? 0.95 : 1 }],
+        ...(Platform.OS === "web"
+          ? ({ boxShadow: "0px 10px 24px rgba(242,84,91,0.4)" } as ViewStyle)
+          : { shadowColor: colors.accent, shadowOpacity: 0.4, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 }),
+      })}
+    >
+      <Ionicons name={icon} size={24} color={colors.onAccent} />
+    </Pressable>
+  );
+}
+
+// ---------------- Stat ----------------
+export function Stat({ label, value, icon, tone = "brand", testID }: { label: string; value: string; icon: IconName; tone?: "brand" | "accent" | "success" | "warning" | "error" | "info"; testID?: string }) {
+  const { colors, scheme } = useTheme();
+  const c =
+    tone === "brand" ? colors.brandPrimary :
+    tone === "accent" ? colors.accent :
+    colors[tone];
+  const soft =
+    tone === "brand" ? colors.brandTertiary :
+    tone === "accent" ? colors.accentSoft :
+    (c + "22");
   return (
     <View
       testID={testID}
@@ -245,17 +430,20 @@ export function Stat({ label, value, icon, tone = "brand", testID }: { label: st
         flexBasis: "47%",
         flexGrow: 1,
         backgroundColor: colors.surfaceSecondary,
-        borderRadius: radius.md,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderTopWidth: 3,
-        borderTopColor: c,
+        borderRadius: radius.lg,
         padding: spacing.lg,
-        gap: spacing.xs,
+        gap: spacing.sm,
+        ...(scheme === "light"
+          ? Platform.OS === "web"
+            ? ({ boxShadow: "0px 4px 14px rgba(31,42,77,0.06)" } as ViewStyle)
+            : { shadowColor: colors.onSurface, shadowOpacity: 0.08, shadowRadius: 14, shadowOffset: { width: 0, height: 4 }, elevation: 2 }
+          : { borderWidth: 1, borderColor: colors.border }),
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
-        <Ionicons name={icon} size={18} color={c} />
+        <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: soft, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name={icon} size={16} color={c} />
+        </View>
         <T v="caption" style={{ flex: 1 }} numberOfLines={1}>{label}</T>
       </View>
       <T v="title" style={{ color: colors.onSurface }} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
@@ -293,13 +481,19 @@ export function ErrorBox({ message, onRetry }: { message: string; onRetry: () =>
 }
 
 // ---------------- Badge ----------------
-export function Badge({ text, tone = "brand", testID }: { text: string; tone?: "brand" | "success" | "warning" | "error" | "pro"; testID?: string }) {
+export function Badge({ text, tone = "brand", testID }: { text: string; tone?: "brand" | "accent" | "success" | "warning" | "error" | "pro"; testID?: string }) {
   const { colors } = useTheme();
-  const bg = tone === "brand" ? colors.brandTertiary : colors[tone];
-  const fg = tone === "brand" ? colors.onBrandTertiary : colors[`on${tone[0].toUpperCase()}${tone.slice(1)}` as keyof ThemeColors];
+  const bg =
+    tone === "brand" ? colors.brandTertiary :
+    tone === "accent" ? colors.accentSoft :
+    colors[tone];
+  const fg =
+    tone === "brand" ? colors.onBrandTertiary :
+    tone === "accent" ? colors.onAccentSoft :
+    colors[`on${tone[0].toUpperCase()}${tone.slice(1)}` as keyof ThemeColors];
   return (
-    <View testID={testID} style={{ backgroundColor: bg, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 2, alignSelf: "flex-start" }}>
-      <Text style={{ color: fg, fontFamily: fonts.semibold, fontSize: 12 }}>{text}</Text>
+    <View testID={testID} style={{ backgroundColor: bg, borderRadius: radius.pill, paddingHorizontal: spacing.sm, paddingVertical: 3, alignSelf: "flex-start" }}>
+      <Text style={{ color: fg as string, fontFamily: fonts.semibold, fontSize: 12 }}>{text}</Text>
     </View>
   );
 }
@@ -336,8 +530,34 @@ export function Segments<K extends string>({ value, onChange, options }: { value
 }
 
 // ---------------- Row ----------------
-export function Row({ title, subtitle, right, onPress, testID, icon }: { title: string; subtitle?: string; right?: React.ReactNode; onPress?: () => void; testID?: string; icon?: IconName }) {
+// List row inspired by the reference image: pastel circular avatar (icon or
+// text initials), bold title, muted subtitle, optional right-side element,
+// soft bottom divider aligned past the avatar.
+export function Row({ title, subtitle, right, onPress, testID, icon, avatarText, avatarTone }: {
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  onPress?: () => void;
+  testID?: string;
+  icon?: IconName;
+  avatarText?: string;
+  avatarTone?: "brand" | "accent" | "success" | "warning" | "error" | "info";
+}) {
   const { colors } = useTheme();
+  const toneBg =
+    avatarTone === "accent" ? colors.accentSoft :
+    avatarTone === "success" ? colors.success + "22" :
+    avatarTone === "warning" ? colors.warning + "22" :
+    avatarTone === "error" ? colors.error + "22" :
+    avatarTone === "info" ? colors.info + "22" :
+    colors.brandTertiary;
+  const toneFg =
+    avatarTone === "accent" ? colors.accent :
+    avatarTone === "success" ? colors.success :
+    avatarTone === "warning" ? colors.warning :
+    avatarTone === "error" ? colors.error :
+    avatarTone === "info" ? colors.info :
+    colors.brandPrimary;
   return (
     <Pressable
       testID={testID}
@@ -349,20 +569,24 @@ export function Row({ title, subtitle, right, onPress, testID, icon }: { title: 
         gap: spacing.md,
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.lg,
-        backgroundColor: pressed ? colors.surfaceSecondary : colors.surface,
+        backgroundColor: pressed ? colors.surfaceTertiary : colors.surfaceSecondary,
         borderBottomWidth: 1,
         borderBottomColor: colors.divider,
-        minHeight: 64,
+        minHeight: 68,
       })}
     >
-      {icon && (
-        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" }}>
-          <Ionicons name={icon} size={20} color={colors.brandPrimary} />
+      {(icon || avatarText) && (
+        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: toneBg, alignItems: "center", justifyContent: "center" }}>
+          {icon ? (
+            <Ionicons name={icon} size={20} color={toneFg} />
+          ) : (
+            <Text style={{ color: toneFg, fontFamily: fonts.bold, fontSize: 15 }}>{(avatarText || "").slice(0, 2)}</Text>
+          )}
         </View>
       )}
       <View style={{ flex: 1 }}>
-        <T v="label" numberOfLines={1}>{title}</T>
-        {!!subtitle && <T v="caption" numberOfLines={2}>{subtitle}</T>}
+        <Text style={{ color: colors.onSurface, fontFamily: fonts.bold, fontSize: 15 }} numberOfLines={1}>{title}</Text>
+        {!!subtitle && <Text style={{ color: colors.muted, fontFamily: fonts.regular, fontSize: 13, marginTop: 2 }} numberOfLines={1}>{subtitle}</Text>}
       </View>
       {right}
     </Pressable>
@@ -550,11 +774,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+export function Section({ title, hint, children, action }: { title: string; hint?: string; children: React.ReactNode; action?: React.ReactNode }) {
+  const { colors } = useTheme();
   return (
-    <View style={{ gap: spacing.md }}>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <T v="h2" style={{ flex: 1 }}>{title}</T>
+    <View style={{ gap: spacing.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-end" }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.onSurface, fontFamily: fonts.bold, fontSize: 17 }}>{title}</Text>
+          {!!hint && <Text style={{ color: colors.muted, fontFamily: fonts.regular, fontSize: 12, marginTop: 2 }}>{hint}</Text>}
+        </View>
         {action}
       </View>
       {children}

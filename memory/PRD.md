@@ -175,3 +175,15 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
 - Maps: Leaflet with Google tiles (mt{0-3}.google.com lyrs m/s/h, Arabic labels, zoom 21), no API key; GPS Accuracy.BestForNavigation.
 - Header: two-row layout — actions row (account chip with initials/name/role·plan, bell, sync) above page title.
 - Testing iteration_3: backend 37/37; goodbye flow, account chip, offline persistent login pass. Device conflict needs real OTP (code-reviewed only).
+
+
+## 2026-10 — Hashed developer phone + global UI redesign (reference image)
+- Security: `convex/edge.ts` → new `hashPhone(phone)` (sha256(`OTP_PEPPER:phone`)); `openSession` now compares against `DEVELOPER_PHONES_HASH` env var (comma-separated hex). Convex deployment: `DEVELOPER_PHONES_HASH` set, plaintext `DEVELOPER_PHONES` removed, functions re-deployed to fearless-ostrich-878.
+- UI redesign (matches reference image shared by user — "Modychat" style):
+  - theme.ts: added `accent`/`onAccent` (coral `#F2545B`), `accentSoft`, `headerDeep`/`onHeaderDeep`; new `radius.xl=28`.
+  - ui.tsx: `Btn` primary now coral pill with soft shadow (new `navy` variant retains the old look); `Header` rewritten as dark-navy block with large curved bottom corners, centered white title, `onBack` chevron pill, and new `tabs/tabValue/onTabChange` props for pill-shaped segmented tabs inside the dark area; new `HeaderIconBtn` + `FAB`; `Row` now supports pastel circular avatars (icon or initials with tone); `Card`/`Stat`/`Badge`/`Section` softened.
+  - Right-slot cluster redesigned for the dark header: `SyncBadge` + `NotificationBell` rendered as deep-navy pills with white icons + coral unread/offline dots; `AccountButton` reduced to a coral initials circle that still opens the full Account sheet.
+  - Screen migrations: `reports.tsx`, `legal.tsx`, `upgrade.tsx`, `agents-map.tsx` now use the new `onBack` prop; `activate.tsx`, `consent.tsx`, `dev/billing.tsx`, `screens/Dev.tsx` use `HeaderIconBtn`.
+  - `_layout.tsx`: StatusBar switched to `light` for the dark header.
+- UI cleanup: every user-visible "Convex" string removed (login/convex-check — the diagnostic board was renamed to "لوحة البيانات الحيّة" and all `(stats.overview)` / `products.list · حيّ` developer labels dropped). TypeScript source comments still reference Convex as the backend provider (not user-visible).
+- Verified by testing_agent (iteration_4): 43/43 backend pytest (hashed-dev + regression) + frontend screenshots of login/legal/convex-check.

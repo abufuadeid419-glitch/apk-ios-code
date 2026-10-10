@@ -47,7 +47,7 @@ export default function Reports() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }} testID="reports-screen">
-      <Header title="التقارير" subtitle="أداء المبيعات حسب الفترة" right={<IconBtn testID="reports-back-button" icon="arrow-forward" onPress={() => router.back()} />} />
+      <Header title="التقارير" subtitle="أداء المبيعات حسب الفترة" onBack={() => router.back()} />
       <Segments value={period} onChange={setPeriod} options={[{ key: "day", label: "يومي" }, { key: "week", label: "أسبوعي" }, { key: "month", label: "شهري" }]} />
       <ScrollView
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: insets.bottom + spacing.xl }}
