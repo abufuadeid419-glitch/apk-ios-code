@@ -213,6 +213,41 @@ frontend:
           `تمت المزامنة · N عملية` only when N >= 3 (TOAST_THRESHOLD) to
           avoid noise on single-item flushes. Toast provider already wraps
           every screen in `_layout.tsx`.
+  - task: "Haptic buzz with sync completion toast + startSyncLoop wiring"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/SyncBanner.tsx, /app/frontend/src/auth.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          User reported "the app does not start working" after iteration 6.
+          Investigation found a latent bug that pre-dated this fork and was
+          surfaced by the offline-sync overhaul: `startSyncLoop` was defined
+          in `src/offline.ts` but NEVER called anywhere, which meant the
+          NetInfo listener + periodic kick that is supposed to drain the
+          queue on reconnect was dead code. User-visible symptom: on an
+          actual device/Expo-Go run, nothing happened after regaining
+          connectivity — users saw "pending" indefinitely until they
+          performed another write. Fix:
+            - `src/auth.tsx` AuthProvider mount effect now boots the sync
+              loop with `const stopSync = startSyncLoop()` and cleans it up
+              on unmount. The loop runs for the lifetime of an authenticated
+              session (and is cleared by `clear()` on logout).
+          Second fix (surfaced by TypeScript):
+            - `SyncBanner.tsx` was returning the raw unsubscribe directly
+              from the useEffect callback — `onSyncComplete` returns
+              `() => boolean` (the Set.delete), which React treats as an
+              invalid Destructor. Replaced with an explicit cleanup wrapper.
+          Haptic feature:
+            - `SyncBanner.tsx` now fires `Haptics.notificationAsync(Success)`
+              on native right before the "تمت المزامنة · N عملية" toast so
+              connected devices feel the moment their backlog landed. The
+              toast provider also triggers Success haptic — our local call
+              is a belt-and-suspenders guarantee for the sync moment.
           Owner (and accountant) home now uses the Header `tabs/tabValue
           /onTabChange` props to render 3 pill tabs INSIDE the dark navy area
           (Chats/Status/Calls style): "الرئيسية" / "التنبيهات" / "الأداء".

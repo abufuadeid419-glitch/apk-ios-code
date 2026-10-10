@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 import { api, setToken, setUnauthorizedHandler } from "@/src/api";
 import { deviceLabel, devicePlatform } from "@/src/device";
-import { clearOffline } from "@/src/offline";
+import { clearOffline, startSyncLoop } from "@/src/offline";
 import { queryClient } from "@/src/query-client";
 import { storage } from "@/src/utils/storage";
 
@@ -77,6 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUnauthorizedHandler(() => {
       clear();
     });
+    // Boot the offline sync loop (NetInfo listener + periodic kick). Without
+    // this, the queue only drains when the user manually taps "sync now" or
+    // enqueues a new item — so a reconnect catch-up never happens by itself.
+    const stopSync = startSyncLoop();
     (async () => {
       const t = await storage.secureGet(TOKEN_KEY, null);
       if (!t) return setUserState(null);
@@ -96,6 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         else await clear();
       }
     })();
+    return () => {
+      stopSync();
+    };
   }, [clear]);
 
   // Resolves to the channel the code was sent on, or null on failure.

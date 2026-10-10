@@ -224,3 +224,18 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
   on single-item flushes.
 - Verified by testing_agent (iteration_6): code review + 8/8 backend regression
   + login smoke, no console errors, iter-5 offline invariants intact.
+
+## 2026-10 — Haptic on sync + startup sync-loop wiring (bug fix)
+- Latent bug fixed: `startSyncLoop` in `src/offline.ts` was defined but never
+  called, so the NetInfo auto-flush on reconnect + 30s periodic kick were dead
+  code (user-reported "app doesn't start / nothing happens"). Now boot it from
+  `AuthProvider`'s mount effect and dispose on unmount.
+- `SyncBanner` useEffect fixed: it was returning `onSyncComplete`'s unsubscribe
+  directly, which is `() => boolean` — React treats that as an invalid
+  Destructor. Replaced with an explicit void-returning cleanup wrapper.
+- Haptic buzz: `SyncBanner` now fires `Haptics.notificationAsync(Success)` on
+  native right before the quiet "تمت المزامنة · N عملية" toast, so connected
+  devices feel the moment their reconnect catch-up lands.
+- Verified by testing_agent (iteration_7): 8/8 backend regression, startup
+  smoke clean, zero console errors, code review confirms all fixes.
+

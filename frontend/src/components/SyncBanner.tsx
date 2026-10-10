@@ -1,5 +1,6 @@
+import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 
 import { discardFailed, onSyncComplete, retryFailed, syncQueue, useSyncState } from "@/src/offline";
 import { fonts, spacing, useTheme } from "@/src/theme";
@@ -11,7 +12,8 @@ const TOAST_THRESHOLD = 3;
 
 // Shows connectivity + pending/failed offline actions. Hidden when all is synced.
 // Includes a progress indicator for large flushes (thousands of items) and a
-// quiet toast on completion so owners know a reconnect catch-up finished.
+// quiet toast + haptic buzz on completion so owners know a reconnect catch-up
+// finished.
 export function SyncBanner() {
   const { colors } = useTheme();
   const toast = useToast();
@@ -22,11 +24,21 @@ export function SyncBanner() {
   const toastRef = useRef(toast);
   toastRef.current = toast;
   useEffect(() => {
-    return onSyncComplete((synced) => {
+    const unsubscribe = onSyncComplete((synced) => {
       if (synced >= TOAST_THRESHOLD) {
+        // Small success buzz on native so a connected device *feels* the moment
+        // their backlog finally landed. The toast provider also triggers a
+        // Success haptic, but running our own here ensures the buzz fires even
+        // if the toast is suppressed for any reason (e.g. provider unmounted).
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        }
         toastRef.current(`تمت المزامنة · ${synced} عملية`);
       }
     });
+    return () => {
+      unsubscribe();
+    };
   }, []);
   if (online && !pending.length && !failed.length) return null;
   const tone = failed.length ? colors.error : online ? colors.info : colors.warning;
