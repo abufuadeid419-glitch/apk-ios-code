@@ -10,28 +10,39 @@ export const setUnauthorizedHandler = (fn: () => void) => {
 
 export async function api<T = any>(
   path: string,
-  opts: { method?: string; body?: unknown } = {},
+  opts: { method?: string; body?: unknown; timeoutMs?: number } = {},
 ): Promise<T> {
   let res: Response;
+  // Per-request timeout so a hung connection does not block the sync loop
+  // forever on huge offline backlogs.
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timeout = ctrl ? setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 25000) : null;
   try {
-    res = await fetch(`${process.env.EXPO_PUBLIC_CONVEX_SITE_URL}/api${path}`, {
-      method: opts.method ?? "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-    });
-  } catch {
-    throw Object.assign(new Error("تعذر الاتصال بالخادم، تحقق من الإنترنت"), { offline: true });
+    try {
+      res = await fetch(`${process.env.EXPO_PUBLIC_CONVEX_SITE_URL}/api${path}`, {
+        method: opts.method ?? "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+        signal: ctrl?.signal,
+      });
+    } catch (e: any) {
+      // Network error OR abort (timeout). Both are retryable.
+      const msg = e?.name === "AbortError" ? "انتهت مهلة الاتصال، سنعيد المحاولة" : "تعذر الاتصال بالخادم، تحقق من الإنترنت";
+      throw Object.assign(new Error(msg), { offline: true });
+    }
+    const data = await res.json().catch(() => null);
+    if (res.status === 401 && token) onUnauthorized?.();
+    if (!res.ok) {
+      const d = data?.detail;
+      throw Object.assign(new Error(typeof d === "string" ? d : "حدث خطأ غير متوقع"), { status: res.status });
+    }
+    return data as T;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
-  const data = await res.json().catch(() => null);
-  if (res.status === 401 && token) onUnauthorized?.();
-  if (!res.ok) {
-    const d = data?.detail;
-    throw new Error(typeof d === "string" ? d : "حدث خطأ غير متوقع");
-  }
-  return data as T;
 }
 
 export const money = (n: number | null | undefined) =>

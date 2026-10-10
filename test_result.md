@@ -151,6 +151,59 @@ frontend:
             - Header rewritten: dark navy with large curved bottom corners,
               centered white title, optional `onBack` prop (chevron pill), new
               `tabs/tabValue/onTabChange` props for pill-shaped segmented tabs
+
+  - task: "Scalable offline sync + conflict resolution"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/offline.ts, /app/frontend/src/api.ts, /app/frontend/src/components/SyncBanner.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Rewrote `src/offline.ts` for reconnect throughput and conflict safety.
+          Highlights:
+          - Bounded parallel sync (PARALLEL=6) across distinct endpoints while
+            keeping per-endpoint insertion order so dependent writes against
+            the same path flush in the user's original order.
+          - Exponential backoff with jitter (BACKOFF_BASE_MS=1000, cap 30s,
+            MAX_ATTEMPTS=5); each item carries `attempts` + `next_attempt_at`
+            persisted after every send so state survives app restarts.
+          - Error classifier: offline (abort/network) / transient (5xx/429
+            /timeout) / conflict (409) / permanent (other 4xx). 409 drops the
+            optimistic row from every cached list that holds that `id` and
+            invalidates the matching query key — server is authoritative, no
+            data loss (failed tray not needed for 409).
+          - `enqueue` is id-idempotent (dedupe on both pending and failed
+            trays). `retryFailed(id)` moves a failed entry back to pending.
+          - `useSyncState().progress = { done, total }`; `SyncBanner` shows a
+            progress bar + Arabic percentage during big flushes.
+          - `api.ts` adds a 25s AbortController timeout; abort is tagged as
+            `offline` so the sync loop pauses + resumes without consuming
+            attempts.
+  - task: "Owner dashboard pill-tabs inside dark header"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/screens/Overview.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Owner (and accountant) home now uses the Header `tabs/tabValue
+          /onTabChange` props to render 3 pill tabs INSIDE the dark navy area
+          (Chats/Status/Calls style): "الرئيسية" / "التنبيهات" / "الأداء".
+          - Home tab: ProBanner, OwnerOnboarding, stats grid (now with accent
+            tone on today's sales), recent sales rows with coral avatar tone.
+          - Alerts tab: AlertsCard, StaleDebtorsCard, low-stock warning section;
+            empty state when nothing to show.
+          - Performance tab: SalesTargetsCard + Leaderboard behind ProLock.
+          Field-agent single-scroll preserved (no tabs) because its cards are
+          flow-dependent (location, target, route, stock).
               INSIDE the dark area.
             - New `HeaderIconBtn` and `FAB` components.
             - Row component now supports `avatarText`/`avatarTone` for pastel
@@ -211,3 +264,44 @@ agent_communication:
           the UI should still say "Convex" to the user.
       (3) Prefer visual + snapshot checks on web preview. Seeded tokens:
           test_token_owner/_acct/_agent/_dev (see /app/memory/test_credentials.md).
+
+  - agent: "main"
+    message: |
+      Follow-up (iteration 5): scalable offline sync + owner-dashboard pill tabs.
+      (A) `src/offline.ts` rewritten for high-throughput reconnect:
+          - Bounded parallel sync (6 concurrent) across different endpoints
+            while PRESERVING per-endpoint insertion order (same `path` is
+            serialized). Dedupe by client-id on enqueue so re-enqueueing
+            is a no-op.
+          - Exponential backoff (1s→16s, 25% jitter, max 5 attempts) for
+            transient failures (5xx/429/timeout/network). Backoff state is
+            persisted on each item (`attempts`, `next_attempt_at`) so it
+            survives app restarts.
+          - Error classification: offline / transient / conflict / permanent.
+            409 CONFLICT is treated as server-authoritative: we drop the
+            optimistic row from any cached list that still has it, invalidate
+            that endpoint's queries, and advance the queue (NO data loss —
+            the user retains the failed-tray entry for review).
+          - Progress tracking: `useSyncState().progress = { done, total }`;
+            SyncBanner shows a progress bar + percentage for big flushes.
+          - Per-request timeout in `api.ts` (25s AbortController) so hung
+            sockets don't block the sync loop; aborts are retried.
+          - New `retryFailed(id)` user action to move an item from failed
+            tray back into the pending queue.
+      (B) Owner-dashboard pill tabs: `src/screens/Overview.tsx` now renders
+          the dark header with a 3-pill tab switcher inside (Chats/Status/Calls
+          style) for OWNER + ACCOUNTANT: "الرئيسية" / "التنبيهات" / "الأداء".
+          FIELD_AGENT keeps the single-scroll flow because its cards are
+          flow-dependent. Stats row now uses accent (coral) + semantic tones.
+      Please verify:
+      - Backend regression suite (seeded tokens) still 100%.
+      - A large simulated backlog (hundreds of items) flushes in parallel with
+        no out-of-order writes against the same endpoint; a transient 503
+        results in a retry (backoff visible in queue state), not an immediate
+        failure.
+      - 409 handler: a POST that returns 409 causes the optimistic cache row
+        with that `id` to disappear and the pending queue to advance.
+      - Owner home shows three pill tabs inside the dark navy header; the
+        back-tab routing works (home/alerts/performance), and the "التنبيهات"
+        tab shows alerts cards; "الأداء" shows targets + leaderboard behind
+        ProLock. Agent home shows no tabs (single scroll preserved).

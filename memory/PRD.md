@@ -187,3 +187,28 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
   - `_layout.tsx`: StatusBar switched to `light` for the dark header.
 - UI cleanup: every user-visible "Convex" string removed (login/convex-check — the diagnostic board was renamed to "لوحة البيانات الحيّة" and all `(stats.overview)` / `products.list · حيّ` developer labels dropped). TypeScript source comments still reference Convex as the backend provider (not user-visible).
 - Verified by testing_agent (iteration_4): 43/43 backend pytest (hashed-dev + regression) + frontend screenshots of login/legal/convex-check.
+
+
+## 2026-10 — Scalable offline sync + Owner home pill-tabs
+- Offline sync overhaul (`src/offline.ts` + `src/api.ts` + `components/SyncBanner.tsx`):
+  - Bounded parallel sync (6 concurrent) across distinct endpoints while
+    strictly serializing writes against the same `path` → preserves per-endpoint
+    ordering for dependent writes. Enqueue dedupes by client-id.
+  - Error classifier: offline / transient (5xx/429/timeout) / conflict (409) /
+    permanent. Transient failures retry with exponential backoff + jitter
+    (1s→16s, max 5 attempts); backoff state persists across restarts.
+  - Conflict resolution: 409 drops the optimistic row from every cached list
+    holding that `id`, invalidates the matching query, advances the queue — no
+    failed-tray noise, zero data loss (server authoritative).
+  - `api.ts` 25s AbortController timeout; aborts tag `offline:true` so the
+    sync loop pauses instead of consuming an attempt.
+  - UI: SyncBanner now shows a progress bar + `done/total (%)`; failed rows
+    gain a new `إعادة` (retryFailed) action alongside `تجاهل`.
+- Owner dashboard pill-tabs (`src/screens/Overview.tsx`): dark-navy Header now
+  carries 3 pill tabs inside — `الرئيسية` / `التنبيهات` / `الأداء` — for OWNER
+  + ACCOUNTANT. Stats tiles use the new `accent` tone. Field-agent flow kept
+  as single scroll (its cards are flow-dependent).
+- Verified by testing_agent (iteration_5): 10/10 backend regression + idempotency
+  (customers), owner pill-tab navigation, agent single-scroll preserved, offline
+  queue drained from a seeded 1200-item backlog, 409/503 classifier verified by
+  code review, SyncBanner retry button rendered.
