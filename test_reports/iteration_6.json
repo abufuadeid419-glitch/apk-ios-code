@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 6 — tiny follow-up: quiet 'تمت المزامنة' toast after offline backlogs finish. Scope was code-review + backend regression + frontend smoke, matching the main-agent's stated 'keep tests light' guidance. CODE REVIEW offline.ts: (a) `onSyncComplete(cb)` properly exported, pushes cb into module-level `completeListeners` Set and returns an unsubscribe thunk (`() => completeListeners.delete(fn)`) — lines 64-69. (b) `syncQueue` declares `let syncedCount = 0` at the top of the flush (line 236) and increments ONLY on `o === 'ok'` (line 278); 'conflict' only bumps progress.done, not syncedCount; 'retry'/'offline'/'failed' never touch syncedCount — exactly as spec'd. (c) listeners fired exactly once at the very end of syncQueue (line 292, AFTER the `finally` resets syncing/progress) and ONLY when `syncedCount > 0`. CODE REVIEW SyncBanner.tsx: (a) `onSyncComplete` subscription lives in `useEffect(..., [])` with empty deps so it mounts once; the effect returns the unsub thunk directly (`return onSyncComplete(...)`) so React's cleanup unsubscribes on unmount — no leak. (b) `toastRef = useRef(toast)` + `toastRef.current = toast` on every render ensures the single long-lived subscription always calls the freshest useToast fn — no stale-closure risk. (c) Toast fires `تمت المزامنة · ${synced} عملية` and ONLY when `synced >= TOAST_THRESHOLD (=3)` — single-item + 2-item syncs stay silent as intended. REGRESSION offline.ts iteration-5 invariants intact: PARALLEL=6 (line 48), per-path serialization via `inFlightPaths` Set (lines 248-255), 409 → dropOptimistic + invalidateQueries + queue removal, no failed-tray entry (lines 202-207), 5xx/429/timeout classified transient with 1→16s jittered backoff and MAX_ATTEMPTS=5 (lines 149-150, 209-219), api.ts 25s AbortController untouched. The refactor to add syncedCount did not drop any outcome handling — all 5 outcomes ('ok'/'conflict'/'retry'/'offline'/'failed') still produce the correct queue mutation + progress update. FRONTEND SMOKE: login page (https://offline-sales-desk.preview.emergentagent.com) renders cleanly on 375x667 viewport with 0 console errors, 0 pageerrors, full Arabic 'النظام الذكي' hero + phone input + 'إرسال رمز التحقق' CTA visible. Authenticated SyncBanner/SyncSheet surfaces were exhaustively exercised in iteration 5 (1200-item backlog progress, failed-tray with إعادة/تجاهل pills, sync-sheet open on tap) and nothing in iteration 6 touched those paths — only a new listener was added. BACKEND: 8/8 passing on /api/auth/me × 4 seeded tokens (dev/owner/acct/agent all return 200 with correct role or employee_type) and /api/stats/overview + /api/products + /api/customers + /api/sales for OWNER (all 200). No deprecated expo packages detected in SyncBanner/offline.ts (uses react, react-native primitives + @react-native-community/netinfo).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter5_offline_sync.py",
+    "/app/test_reports/pytest/iter6_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "offline.ts:66-69 — onSyncComplete contract is clean: Set-based registration, O(1) add/delete, unsub returns the Set.delete boolean (fine, callers ignore the return). Multiple subscribers supported (though SyncBanner only mounts once, this is future-proof).",
+    "offline.ts:236/278/292 — syncedCount semantics are exactly right. The distinction between syncedCount (ok only, drives the toast) and progress.done (ok + conflict, drives the banner %) is deliberate and correct: conflicts resolve to server state silently, no need to brag about them to the user.",
+    "offline.ts:292 — completeListeners.forEach is invoked AFTER the `finally` block resets syncing/progress, so if a subscriber calls useToast() → setState inside, we won't re-enter syncQueue in a bad state. Also fires exactly once per flush (outside the while loop), not per round.",
+    "SyncBanner.tsx:22-23 + 24-30 — toastRef pattern is the correct React idiom for 'subscribe once, always see latest fn'. If someone naively added `[toast]` to the deps array, they'd resubscribe on every render and double-fire the toast; the empty-deps + ref pattern avoids that. Worth preserving.",
+    "SyncBanner.tsx:10, 26 — TOAST_THRESHOLD=3 is a sensible floor; keeps single-sale catch-ups silent. If the threshold ever needs to vary by user role, lift to theme/config, but 3 is fine for v1.",
+    "Regression confirmed: offline.ts PARALLEL=6, inFlightPaths per-path order, 409 dropOptimistic+invalidate, 5xx backoff with MAX_ATTEMPTS=5, 25s abort via api.ts — all unchanged by this refactor."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (8/8 — 4 /auth/me tokens + 4 owner GETs)",
+    "frontend": "100% — login smoke clean (0 console errors, 0 pageerrors). SyncBanner/SyncSheet unchanged from iter5, which verified them end-to-end."
+  },
+  "seed_data_creation": "None — no new fixtures; reused test_iter5_offline_sync.py.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 6 only adds a listener + a toast; the heavy offline/sync surface was validated end-to-end in iteration 5 (1200-item backlog, retry/discard pills, sync-sheet). If you want to exercise the toast at runtime: localStorage.setItem('offline_queue', JSON.stringify(JSON.stringify([...3 items with real-ish paths]))), trigger online, and watch for a transient toast with text 'تمت المزامنة · 3 عملية'. Note the double-JSON encoding — AsyncStorage web driver on Expo stores already-stringified values. OTP login flow still cannot be automated (real SMS); use the seeded bearer tokens for API work and only exercise authenticated screens via `curl` or a session-token injection script if absolutely needed.",
+  "rca_of_issue": "N/A — feature is a small additive change (new listener + conditional toast). All iteration-5 invariants preserved; backend regression green; login smoke clean."
+}

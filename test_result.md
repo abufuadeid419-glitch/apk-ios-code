@@ -194,6 +194,25 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: |
+  - task: "Live sync completion toast"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/offline.ts, /app/frontend/src/components/SyncBanner.tsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: |
+          Added `onSyncComplete(cb)` subscription on the offline module that
+          fires once per `syncQueue()` run with the number of items that
+          actually landed on the server (409 conflicts and transient retries
+          are excluded). SyncBanner subscribes on mount via a ref-stable
+          handler and shows a quiet success toast
+          `تمت المزامنة · N عملية` only when N >= 3 (TOAST_THRESHOLD) to
+          avoid noise on single-item flushes. Toast provider already wraps
+          every screen in `_layout.tsx`.
           Owner (and accountant) home now uses the Header `tabs/tabValue
           /onTabChange` props to render 3 pill tabs INSIDE the dark navy area
           (Chats/Status/Calls style): "الرئيسية" / "التنبيهات" / "الأداء".

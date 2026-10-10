@@ -1,16 +1,33 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 
-import { discardFailed, retryFailed, syncQueue, useSyncState } from "@/src/offline";
+import { discardFailed, onSyncComplete, retryFailed, syncQueue, useSyncState } from "@/src/offline";
 import { fonts, spacing, useTheme } from "@/src/theme";
-import { Btn, Ionicons, Row, Sheet, T } from "@/src/ui";
+import { Btn, Ionicons, Row, Sheet, T, useToast } from "@/src/ui";
+
+// Threshold for the "تمت المزامنة" toast — only pop it when a meaningful
+// backlog landed (avoids noise after single-item syncs).
+const TOAST_THRESHOLD = 3;
 
 // Shows connectivity + pending/failed offline actions. Hidden when all is synced.
-// Includes a progress indicator for large flushes (thousands of items).
+// Includes a progress indicator for large flushes (thousands of items) and a
+// quiet toast on completion so owners know a reconnect catch-up finished.
 export function SyncBanner() {
   const { colors } = useTheme();
+  const toast = useToast();
   const { pending, failed, online, syncing, progress } = useSyncState();
   const [open, setOpen] = useState(false);
+  // Keep the latest toast fn in a ref so onSyncComplete's one-time subscription
+  // can always reach the current provider without re-subscribing per render.
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+  useEffect(() => {
+    return onSyncComplete((synced) => {
+      if (synced >= TOAST_THRESHOLD) {
+        toastRef.current(`تمت المزامنة · ${synced} عملية`);
+      }
+    });
+  }, []);
   if (online && !pending.length && !failed.length) return null;
   const tone = failed.length ? colors.error : online ? colors.info : colors.warning;
   const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;

@@ -58,7 +58,15 @@ let syncing = false;
 let online = true;
 let progress = { done: 0, total: 0 };
 const listeners = new Set<() => void>();
+// Fires once per flush that successfully synced items — payload is the number
+// of items that landed on the server in this batch. Used by UI (SyncBanner) to
+// pop a quiet "تمت المزامنة" toast after large reconnect catch-ups.
+const completeListeners = new Set<(synced: number) => void>();
 const notify = () => listeners.forEach((f) => f());
+export function onSyncComplete(fn: (synced: number) => void) {
+  completeListeners.add(fn);
+  return () => completeListeners.delete(fn);
+}
 
 const parse = (raw: unknown, fb: any) => {
   try {
@@ -221,9 +229,11 @@ export async function syncQueue() {
   await load();
   if (syncing || !queue.length) return;
   syncing = true;
-  progress = { done: 0, total: queue.length };
+  const startTotal = queue.length;
+  progress = { done: 0, total: startTotal };
   notify();
   let anySuccess = false;
+  let syncedCount = 0;
   try {
     // Loop: on each iteration, pick up to PARALLEL items such that no two
     // items from the same `path` run concurrently (preserves per-endpoint
@@ -265,6 +275,7 @@ export async function syncQueue() {
           progress.done++;
           anySuccess = true;
         }
+        if (o === "ok") syncedCount++;
         if (o === "offline") hitOffline = true;
       }
       notify();
@@ -277,6 +288,8 @@ export async function syncQueue() {
     notify();
   }
   if (anySuccess) queryClient.invalidateQueries();
+  // Notify UI listeners of successful completion so they can toast the user.
+  if (syncedCount > 0) completeListeners.forEach((f) => f(syncedCount));
 }
 
 let wakeTimer: any = null;

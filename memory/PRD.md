@@ -212,3 +212,15 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
   (customers), owner pill-tab navigation, agent single-scroll preserved, offline
   queue drained from a seeded 1200-item backlog, 409/503 classifier verified by
   code review, SyncBanner retry button rendered.
+
+
+## 2026-10 — Live sync completion toast
+- `src/offline.ts`: new `onSyncComplete(cb)` listener fires at the end of every
+  `syncQueue()` run with the count of items that truly landed on the server
+  (409 conflicts and transient retries NOT counted).
+- `components/SyncBanner.tsx`: subscribes once on mount via a toast-ref so the
+  long-lived listener never calls a stale toast; shows the quiet success toast
+  `تمت المزامنة · N عملية` only when N ≥ 3 (TOAST_THRESHOLD) to avoid noise
+  on single-item flushes.
+- Verified by testing_agent (iteration_6): code review + 8/8 backend regression
+  + login smoke, no console errors, iter-5 offline invariants intact.
