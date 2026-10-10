@@ -167,3 +167,11 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
 - ProBanner on owner dashboard (last 3 days / free / licence ending) + auto full-screen /upgrade once per day; ProComparison hero + Free vs Pro table on /upgrade.
 - Trial reminders cron 08:00 UTC: in-app notification + SMS at 3d, 1d, expired (once each).
 - Test accounts re-seeded (org_test_1) for testing. Testing iteration_2: backend 16/16, UI light/dark pass.
+
+## Offline / single-device / logout / maps / header (2026-06)
+- Persistent login: user profile cached (storage "cached_user"); app opens with cached profile when offline/server unreachable; only a real 401 logs out. GET cache + offline mutation queue pre-existing.
+- One device per account: convex/edge.ts checkOtp returns conflict (code not consumed) when live sessions exist; client shows DeviceConflictSheet (نعم → verify force=true deletes old sessions; لا → stop). Old device gets 401 → logged out.
+- Logout: account sheet → /goodbye (farewell "شكراً لثقتك بنا"), session cleared there after role screens unmount (fixes crash).
+- Maps: Leaflet with Google tiles (mt{0-3}.google.com lyrs m/s/h, Arabic labels, zoom 21), no API key; GPS Accuracy.BestForNavigation.
+- Header: two-row layout — actions row (account chip with initials/name/role·plan, bell, sync) above page title.
+- Testing iteration_3: backend 37/37; goodbye flow, account chip, offline persistent login pass. Device conflict needs real OTP (code-reviewed only).

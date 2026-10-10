@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/src/auth";
 import { KeyboardScreen } from "@/src/components/KeyboardScreen";
+import { DeviceConflictSheet } from "@/src/components/DeviceConflictSheet";
 import { fonts, makeStyles, radius, spacing, useTheme } from "@/src/theme";
 import { Btn, Field, Ionicons, T } from "@/src/ui";
 
@@ -158,6 +159,7 @@ function PhoneAuth() {
       <>
         {err}
         <Btn testID="login-verify-button" title="تحقق ودخول" icon="checkmark" loading={busy} disabled={code.length !== 6} onPress={() => verifyOtp(sentTo, code)} />
+        <DeviceConflictSheet />
       </>,
     );
   }

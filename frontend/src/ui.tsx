@@ -217,19 +217,19 @@ export function Header({ title, subtitle, right }: { title: string; subtitle?: s
         paddingHorizontal: spacing.lg,
         paddingBottom: spacing.md,
         backgroundColor: colors.surface,
-        borderBottomWidth: 0,
+        borderBottomWidth: 1,
         borderBottomColor: colors.divider,
-        flexDirection: "row",
-        alignItems: "center",
         gap: spacing.md,
       }}
     >
-      <View style={{ width: 4, alignSelf: "stretch", borderRadius: radius.pill, backgroundColor: colors.brandPrimary }} />
-      <View style={{ flex: 1 }}>
-        <T v="title" testID="screen-title">{title}</T>
-        {!!subtitle && <T v="caption">{subtitle}</T>}
+      {!!right && <View testID="header-actions" style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm, flexWrap: "wrap" }}>{right}</View>}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        <View style={{ width: 4, alignSelf: "stretch", borderRadius: radius.pill, backgroundColor: colors.brandPrimary }} />
+        <View style={{ flex: 1 }}>
+          <T v="title" testID="screen-title" numberOfLines={1}>{title}</T>
+          {!!subtitle && <T v="caption" numberOfLines={2}>{subtitle}</T>}
+        </View>
       </View>
-      <View style={{ flexDirection: "row", gap: spacing.sm }}>{right}</View>
     </View>
   );
 }

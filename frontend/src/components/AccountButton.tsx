@@ -6,14 +6,14 @@ import { SyncBadge } from "@/src/components/SyncBadge";
 import { replayTour } from "@/src/components/GuidedTour";
 import { FAQ } from "@/src/legal";
 import { useSyncState } from "@/src/offline";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { api, fmtDate, roleLabel } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { useApi, useMutate } from "@/src/hooks";
 import { ThemeToggle } from "@/src/components/ThemeToggle";
 import { isPro, planLabel } from "@/src/pro";
-import { spacing } from "@/src/theme";
+import { spacing, useTheme } from "@/src/theme";
 import { Badge, Btn, Card, IconBtn, Row, Sheet, T, useToast } from "@/src/ui";
 
 // "Trusted devices": the phones/browsers where this account stays signed in. Revoking one forces
@@ -47,6 +47,7 @@ function TrustedDevices({ open }: { open: boolean }) {
 
 export function AccountButton() {
   const { user, logout } = useAuth();
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { pending } = useSyncState();
@@ -56,17 +57,32 @@ export function AccountButton() {
   const org = user?.org;
   return (
     <>
-      <View style={{ flexDirection: "row", gap: spacing.sm, alignItems: "center" }}>
+      <View style={{ flex: 1, flexDirection: "row", gap: spacing.sm, alignItems: "center" }}>
         <SyncBadge />
         <NotificationBell />
-        <IconBtn testID="account-button" icon="person-circle-outline" onPress={() => setOpen(true)} />
+        <Pressable
+          testID="account-button"
+          onPress={() => setOpen(true)}
+          accessibilityLabel="حسابي"
+          style={({ pressed }) => ({ flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 4, paddingStart: 4, paddingEnd: spacing.md, borderRadius: 999, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary, opacity: pressed ? 0.8 : 1 })}
+        >
+          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center" }}>
+            <T v="label" style={{ color: colors.onBrandPrimary }} testID="account-initials">{(user?.name ?? "؟").trim().slice(0, 1)}</T>
+          </View>
+          <View style={{ flex: 1 }}>
+            <T v="label" numberOfLines={1} style={{ color: colors.onSurface, fontSize: 14, lineHeight: 20 }} testID="account-name-chip">{user?.name ?? ""}</T>
+            <T v="caption" numberOfLines={1} style={{ fontSize: 12, lineHeight: 16, color: isPro(org) ? colors.pro : colors.muted }} testID="account-role-chip">
+              {roleLabel(user)}{org ? ` · ${planLabel(org)}` : ""}
+            </T>
+          </View>
+        </Pressable>
       </View>
       <Sheet
         testID="account-sheet"
         visible={open}
         onClose={() => setOpen(false)}
         title="حسابي"
-        footer={<Btn testID="logout-button" variant="danger" icon="log-out-outline" title="تسجيل الخروج" onPress={() => { setOpen(false); logout(); }} />}
+        footer={<Btn testID="logout-button" variant="danger" icon="log-out-outline" title="تسجيل الخروج" onPress={() => { setOpen(false); router.replace("/goodbye" as any); }} />}
       >
         <Card style={{ gap: spacing.xs }}>
           <T v="h2" testID="account-name">{user?.name}</T>
@@ -108,7 +124,7 @@ export function AccountButton() {
             <Card style={{ gap: spacing.sm }}>
               <T color="error">سيتم حذف حسابك نهائياً. هل أنت متأكد؟</T>
               <Btn testID="confirm-delete-account-button" small variant="danger" title="نعم، احذف حسابي" onPress={async () => {
-                try { await api("/auth/account", { method: "DELETE" }); setOpen(false); await logout(); } catch (e: any) { toast(e.message, "error"); }
+                try { await api("/auth/account", { method: "DELETE" }); setOpen(false); router.replace("/goodbye" as any); } catch (e: any) { toast(e.message, "error"); }
               }} />
             </Card>
           ) : (

@@ -7,6 +7,7 @@ import { queryClient } from "@/src/query-client";
 import { storage } from "@/src/utils/storage";
 
 const TOKEN_KEY = "session_token";
+const USER_KEY = "cached_user";
 
 export type User = {
   user_id: string;
@@ -27,7 +28,9 @@ type Ctx = {
   error: string | null;
   busy: boolean;
   requestOtp: (phone: string, channel?: "whatsapp") => Promise<"sms" | "whatsapp" | null>;
-  verifyOtp: (phone: string, code: string) => Promise<boolean>;
+  verifyOtp: (phone: string, code: string, force?: boolean) => Promise<boolean>;
+  conflict: { phone: string; code: string } | null;
+  dismissConflict: () => void;
   saveName: (name: string) => Promise<boolean>;
   logout: () => Promise<void>;
   setUser: (u: User) => void;
@@ -43,8 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [conflict, setConflict] = useState<{ phone: string; code: string } | null>(null);
+
   const clear = useCallback(async () => {
     await storage.secureRemove(TOKEN_KEY);
+    await storage.removeItem(USER_KEY);
     await clearOffline();
     setToken(null);
     setTokenState(null);
@@ -77,11 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(String(t));
       setTokenState(String(t));
       try {
-        setUserState(await api<User>("/auth/me"));
+        const me = await api<User>("/auth/me");
+        setUserState(me);
+        storage.setItem(USER_KEY, me as any);
         // Trusted device: slide the session forward + record this device on every app open.
         api("/auth/touch", { method: "POST", body: { device: deviceLabel(), platform: devicePlatform() } }).catch(() => {});
-      } catch {
-        await clear();
+      } catch (e: any) {
+        // Offline / server unreachable: stay logged in with the last known profile (persistent login).
+        // A real 401 (session revoked, e.g. account moved to another device) clears via the unauthorized handler.
+        const cached = await storage.getItem<any>(USER_KEY, null);
+        if (cached) setUserState(cached as User);
+        else await clear();
       }
     })();
   }, [clear]);
@@ -100,9 +112,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const verifyOtp = useCallback(
-    (phone: string, code: string) =>
+    (phone: string, code: string, force?: boolean) =>
       run(async () => {
-        const r = await api<{ session_token: string; user: User }>("/auth/otp/verify", { method: "POST", body: { phone, code } });
+        setConflict(null);
+        let r: { session_token: string; user: User };
+        try {
+          r = await api("/auth/otp/verify", { method: "POST", body: { phone, code, force: !!force } });
+        } catch (e: any) {
+          // Account is open on another device: ask before moving it here.
+          if (String(e?.message).includes("DEVICE_CONFLICT")) {
+            setConflict({ phone, code });
+            return;
+          }
+          throw e;
+        }
+        await storage.setItem(USER_KEY, r.user as any);
         setToken(r.session_token);
         await storage.secureSet(TOKEN_KEY, r.session_token);
         setTokenState(r.session_token);
@@ -135,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, error, busy, requestOtp, verifyOtp, saveName, logout, setUser: setUserState, refresh }}>
+    <AuthContext.Provider value={{ user, token, error, busy, requestOtp, verifyOtp, conflict, dismissConflict: () => setConflict(null), saveName, logout, setUser: setUserState, refresh }}>
       {children}
     </AuthContext.Provider>
   );

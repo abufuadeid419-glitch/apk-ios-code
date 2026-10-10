@@ -1,4 +1,4 @@
-// Maps run on Leaflet with Esri streets (OpenStreetMap data) and Esri satellite tiles — no API key anywhere.
+// Maps run on Leaflet with Google Maps tiles (streets + hybrid satellite) — no API key needed.
 // "Open"/"directions" links just hand off to the phone's maps app (plain URLs, no key either).
 export type MapType = "m" | "k" | "h"; // streets | satellite | hybrid
 export const mapOpenUrl = (lat: number, lng: number) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -33,8 +33,8 @@ var D=${data};
 function t(s){var d=new Date(s);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
 var map=L.map('m',{zoomControl:true});
 (${satellite}
-  ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'})
-  : L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, OpenStreetMap'})
+  ? L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&hl=ar&x={x}&y={y}&z={z}',{maxZoom:21,subdomains:'0123',attribution:'© Google'})
+  : L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=ar&x={x}&y={y}&z={z}',{maxZoom:21,subdomains:'0123',attribution:'© Google'})
 ).addTo(map);
 var ll=D.p.map(function(x){return [x[0],x[1]]}),b=ll.slice();
 if(ll.length){
@@ -60,9 +60,9 @@ export function leafletHtml({ markers, line, lineColor = "#1A73E8", type = "m", 
 var D=${data};
 function send(id){var msg=JSON.stringify({leaflet:id});if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(msg);else if(window.parent!==window)window.parent.postMessage({leaflet:id},'*');}
 var map=L.map('m',{zoomControl:true});
-var sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
-var streets=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri, OpenStreetMap'});
-var labels=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+var sat=L.tileLayer('https://mt{s}.google.com/vt/lyrs=s&hl=ar&x={x}&y={y}&z={z}',{maxZoom:21,subdomains:'0123',attribution:'© Google'});
+var streets=L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&hl=ar&x={x}&y={y}&z={z}',{maxZoom:21,subdomains:'0123',attribution:'© Google'});
+var labels=L.tileLayer('https://mt{s}.google.com/vt/lyrs=h&hl=ar&x={x}&y={y}&z={z}',{maxZoom:21,subdomains:'0123'});
 if(D.t==='m')streets.addTo(map);else{sat.addTo(map);if(D.t==='h')labels.addTo(map);}
 if(D.l.length>1)L.polyline(D.l,{color:D.c,weight:4,opacity:0.85}).addTo(map);
 var b=[];

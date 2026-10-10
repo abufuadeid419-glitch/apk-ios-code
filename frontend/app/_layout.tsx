@@ -46,6 +46,7 @@ function Gate() {
       (seg === "reports" && ["owner", "acct"].includes(target)) ||
       (seg === "upgrade" && user?.role === "OWNER") ||
       seg === "legal" ||
+      seg === "goodbye" ||
       seg === "convex-check" ||
       (seg === "agents-map" && target === "owner");
     if (seg !== target && !allowed) router.replace(`/${target}` as any);

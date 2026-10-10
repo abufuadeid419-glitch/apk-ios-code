@@ -14,7 +14,7 @@ const spread = (c: any) => ({ token: c.token, ...c.b });
 const ROUTES: Route[] = [
   // auth
   ["POST", "/auth/otp/request", "a", api.edge.requestOtp, (c) => ({ phone: String(c.b.phone ?? ""), channel: c.b.channel === "whatsapp" ? "whatsapp" : undefined })],
-  ["POST", "/auth/otp/verify", "a", api.edge.verifyOtp, (c) => ({ phone: String(c.b.phone ?? ""), code: String(c.b.code ?? "") })],
+  ["POST", "/auth/otp/verify", "a", api.edge.verifyOtp, (c) => ({ phone: String(c.b.phone ?? ""), code: String(c.b.code ?? ""), force: !!c.b.force })],
   ["POST", "/auth/name", "m", api.edge.setName, (c) => ({ token: c.token, name: String(c.b.name ?? "") })],
   ["GET", "/auth/me", "q", api.extra.me, T],
   ["POST", "/auth/touch", "m", api.sessions.touch, (c) => ({ token: c.token, device: c.b.device, platform: c.b.platform })],

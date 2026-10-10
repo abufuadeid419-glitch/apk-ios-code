@@ -112,12 +112,13 @@ export const requestOtp = action({
 
 // POST /api/auth/otp/verify — check the code against the latest request; on success open a session.
 export const verifyOtp = action({
-  args: { phone: v.string(), code: v.string() },
-  handler: async (ctx, { phone: raw, code }): Promise<any> => {
+  args: { phone: v.string(), code: v.string(), force: v.optional(v.boolean()) },
+  handler: async (ctx, { phone: raw, code, force }): Promise<any> => {
     const phone = raw.trim();
     if (!PHONE_RE.test(phone) || !/^\d{6}$/.test(code.trim())) throw new Error("رمز التحقق غير صحيح");
     const session_token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
-    const res: any = await ctx.runMutation(internal.edge.checkOtp, { phone, code_hash: await hashCode(phone, code.trim()), session_token });
+    const res: any = await ctx.runMutation(internal.edge.checkOtp, { phone, code_hash: await hashCode(phone, code.trim()), session_token, force: !!force });
+    if (res.conflict) throw new Error("DEVICE_CONFLICT");
     if (res.error) throw new Error(res.error);
     return res;
   },
@@ -125,8 +126,8 @@ export const verifyOtp = action({
 
 // Internal: attempt-limited code check; returns an error message (so the attempt count persists) or a session.
 export const checkOtp = internalMutation({
-  args: { phone: v.string(), code_hash: v.string(), session_token: v.string() },
-  handler: async (ctx, { phone, code_hash, session_token }): Promise<any> => {
+  args: { phone: v.string(), code_hash: v.string(), session_token: v.string(), force: v.optional(v.boolean()) },
+  handler: async (ctx, { phone, code_hash, session_token, force }): Promise<any> => {
     const rows = await ctx.db.query("otp_requests").withIndex("by_phone", (q) => q.eq("phone", phone)).collect();
     const last = rows.sort((x, y) => y.created_ms - x.created_ms)[0];
     if (!last || !last.code_hash) return { error: "اطلب رمز تحقق أولاً" };
@@ -135,6 +136,16 @@ export const checkOtp = internalMutation({
     if (last.code_hash !== code_hash) {
       await ctx.db.patch(last._id, { attempts: (last.attempts ?? 0) + 1 });
       return { error: "رمز التحقق غير صحيح" };
+    }
+    // One device per account (like WhatsApp): an active session elsewhere needs explicit consent;
+    // the code is NOT consumed so the client can retry with force=true.
+    const existing = await ctx.db.query("users").withIndex("by_phone", (q) => q.eq("phone", phone)).unique();
+    if (existing) {
+      const live = (await ctx.db.query("user_sessions").withIndex("by_user", (q) => q.eq("user_id", existing.user_id)).collect()).filter(
+        (s: any) => !s.expires_at || Date.parse(s.expires_at) > Date.now(),
+      );
+      if (live.length && !force) return { conflict: true };
+      for (const s of live) await ctx.db.delete(s._id);
     }
     return await openSession(ctx, phone, session_token);
   },

@@ -25,7 +25,7 @@ export async function startTracking() {
     const known = await Location.getLastKnownPositionAsync();
     if (known) onPos(known);
     sub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.Balanced, timeInterval: 60000, distanceInterval: 50 },
+      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 30000, distanceInterval: 10 },
       onPos,
     );
   } catch {}
@@ -37,7 +37,7 @@ export async function currentCoords() {
   if (!perm.granted && perm.canAskAgain) perm = await Location.requestForegroundPermissionsAsync();
   if (!perm.granted) return null;
   try {
-    const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation });
     last = { lat: p.coords.latitude, lng: p.coords.longitude };
     return last;
   } catch {

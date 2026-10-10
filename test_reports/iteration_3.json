@@ -1,0 +1,37 @@
+{
+  "summary": "Backend: 37/37 pytest pass incl. new OTP-verify-with-force (returns 400 + Arabic 'اطلب رمز تحقق أولاً'). Frontend: 3/4 flows PASS — (1) localStorage token bypass + reload lands on dashboard; account-button chip shows avatar initial='م', name, and account-role-chip='موزع ميداني · Pro'; (2) account-sheet → logout-button navigates to /goodbye without crash/blank screen, goodbye-title='شكراً تثقتك بنا' renders, session_token cleared, goodbye-login-button enables, click routes to /login; (3) persistent/offline login: after owner session cached online, aborting *.convex.{site,cloud} and reloading keeps the user on dashboard with cached account chip (fallback works). (4) Google tile maps on owner Management > tracking could NOT be exercised because the targets:list Convex query throws server error 'اشتراك المؤسسة غير فعّال' right after re-seeding — map UI never mounts. maps.ts code-reviewed OK (Leaflet + mt{s}.google.com, no API key, hybrid + streets layers).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "owner → Management → tracking (map test)", "issue": "Convex Q(targets:list) throws 'اشتراك المؤسسة غير فعّال' and the ErrorBoundary replaces the screen with 'Something went wrong', so Leaflet never mounts. Appears right after `edge:seedTestAccounts` ran — seed likely resets org plan to inactive, causing targets:list to reject. Previous iteration had org on an active LICENSE plan (expires 2027/10/10); need to re-apply that plan on org_test_1 (or make targets:list tolerate TRIAL/FREE), otherwise map tiles can't be verified end-to-end.", "affected_testIDs": ["tab-more", "targets:list"]}
+    ],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_convex_api.py",
+    "/app/backend/tests/test_force_otp.py",
+    "/app/backend/tests/test_debt_sms.py",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [
+    "Re-activate LICENSE plan on org_test_1 after seedTestAccounts (or make `edge:seedTestAccounts` idempotent so the org keeps its active plan), so Management > tracking map can mount and Google-tile loads can be verified from the UI.",
+    "Optional: make `targets:list` degrade gracefully (empty list) instead of throwing a server error so the whole screen isn't replaced by ErrorBoundary when the plan check fails."
+  ],
+  "critical_code_review_comments": [
+    "src/auth.tsx verifyOtp correctly catches DEVICE_CONFLICT and parks {phone,code} in state; the DeviceConflictSheet's نعم button then re-calls verifyOtp(phone,code,true). Flow matches spec.",
+    "src/components/DeviceConflictSheet.tsx uses the exact Arabic copy required ('هل توافق على تسجيل الخروج من الجهاز السابق…').",
+    "app/goodbye.tsx safely runs logout() in useEffect after the role-screens unmount, so no half-cleared user render; button is disabled while user still present. Confirmed working.",
+    "src/maps.ts: both trailHtml and leafletHtml use https://mt{s}.google.com/vt/lyrs=m|s|y|h&hl=ar — no API key, Arabic labels, hybrid support. Matches request."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_force_otp.py (new)"
+  ],
+  "success_rate": {"backend": "100% (37/37)", "frontend": "3/4 flows verified end-to-end; map tiles verified only via code review"},
+  "seed_data_creation": "Ran `npx convex run edge:seedTestAccounts` at end of logout test (as instructed) — restored test_token_agent/owner/acct/dev. BUT this reset org_test_1 plan to inactive, breaking targets:list afterwards.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use localStorage.setItem('session_token', JSON.stringify('test_token_<role>')) + reload to bypass OTP. Logout flow: open account-button → sheet footer logout-button (may need scrollIntoView on 390x844 — use JS .click() to avoid Playwright viewport check). Offline test: await page.route('**/*.convex.site/**', lambda r:r.abort()); same for *.convex.cloud; reload — cached_user is served from local storage. For map tests, first ensure org_test_1 has an active LICENSE/Pro plan (edge:seedTestAccounts resets it). Convex HTTP API healthy at https://fearless-ostrich-878.eu-west-1.convex.site/api.",
+  "rca_of_issue": "Owner tracking screen crash: `edge:seedTestAccounts` leaves org_test_1 without an active plan, so the server-side plan guard inside targets:list throws 'اشتراك المؤسسة غير فعّال'; ErrorBoundary catches it and the Leaflet iframe never mounts, blocking visual verification of mt*.google.com tile requests. Mitigation: either keep the plan active after seed, or convert the throw to an empty-array fallback in targets:list."
+}
