@@ -153,3 +153,8 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
 - OTP: SMS Gateway (sms-gate.app) — set Convex env SMS_GATE_USERNAME / SMS_GATE_PASSWORD. SMS only; clear error on failure.
 - Re-seeded test org org_test_1 (edge:seedTestAccounts). Testing agent: backend 35/35 pass; all 4 role dashboards render.
 - Backlog: client-side country-code validation on login (low).
+
+## Data wipe (user request)
+- All Convex tables + file storage cleared (`npx convex import --replace-all` with empty tables). Verified every table empty; API live.
+- Backup taken before wipe: /app/backups/convex_backup_before_wipe.zip (restore: `npx convex import --replace-all <zip>`).
+- Test accounts removed too (re-seed via edge:seedTestAccounts only if user wants).
