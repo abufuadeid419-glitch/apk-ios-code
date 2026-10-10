@@ -19,6 +19,7 @@ import { RoutePlanner } from "@/src/components/RoutePlanner";
 import { OwnerStockRequests } from "@/src/components/StockRequests";
 import { OwnerWarehouseReturns } from "@/src/components/WarehouseReturns";
 import { useApi, useBottomChrome, useMutate } from "@/src/hooks";
+import { ProLock } from "@/src/components/ProLock";
 import { spacing, useTheme } from "@/src/theme";
 import { Badge, Btn, Card, Empty, Field, Header, IconBtn, Loading, Row, Section, Segments, Select, Sheet, T, useToast } from "@/src/ui";
 
@@ -143,7 +144,9 @@ export default function OwnerMore() {
         refreshControl={<RefreshControl refreshing={emps.isRefetching || deliveries.isRefetching} onRefresh={() => { emps.refetch(); deliveries.refetch(); tracking.refetch(); }} tintColor={colors.brandPrimary} />}
       >
         {tab === "routes" ? (
-          <RoutePlanner agents={agents} />
+          <ProLock testID="lock-routes" feature="تخطيط مسارات الموزعين">
+            <RoutePlanner agents={agents} />
+          </ProLock>
         ) : tab === "prices" ? (
           <PriceLists />
         ) : tab === "profile" ? (
@@ -154,10 +157,10 @@ export default function OwnerMore() {
           </>
         ) : tab === "tracking" ? (
           tracking.isLoading ? <Loading /> : (
-            <>
+            <ProLock testID="lock-tracking" feature="تتبع الموزعين المباشر">
               <Btn testID="open-agents-map-button" icon="map-outline" title="الخريطة الحية (Convex · لحظي)" onPress={() => router.push("/agents-map" as any)} />
               <AgentsMap agents={tracking.data ?? []} />
-            </>
+            </ProLock>
           )
         ) : tab === "team" ? (
           <>

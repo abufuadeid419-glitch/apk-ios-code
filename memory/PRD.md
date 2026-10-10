@@ -158,3 +158,12 @@ Activation by license code (LIC-), employee code (EMP-), or a self-service trial
 - All Convex tables + file storage cleared (`npx convex import --replace-all` with empty tables). Verified every table empty; API live.
 - Backup taken before wipe: /app/backups/convex_backup_before_wipe.zip (restore: `npx convex import --replace-all <zip>`).
 - Test accounts removed too (re-seed via edge:seedTestAccounts only if user wants).
+
+## Redesign + Pro features (2026-06)
+- New look: terracotta #A13D2D + gold "pro" palette, light + dark themes (src/theme.ts), theme toggle (تلقائي/فاتح/داكن) in account sheet; restyled Card/Btn(pill)/Header(accent bar)/Stat tiles/tab bar.
+- Debt SMS reminders (convex/proFeatures.ts): owner enables in Management > profile, picks 7/14/30 days; daily cron 07:00 UTC sends one SMS per debtor per period (SMS Gateway), stamps customers.last_sms_reminder_at. API GET/PUT /api/org/debt-sms.
+- Invoice PDF → WhatsApp: DocActions "إرسال PDF عبر واتساب" copies customer number to clipboard then opens share sheet (OS can't pre-select a WhatsApp chat for files); web → wa.me text.
+- Pro model: 14-day free Pro trial; expired trial = Free plan (not blocked) with Pro features locked (ProLock): weekly/monthly reports, daily SMS, debt SMS, route planner, live tracking, targets+leaderboard, >1 employee. Paid licence expiry still blocks.
+- ProBanner on owner dashboard (last 3 days / free / licence ending) + auto full-screen /upgrade once per day; ProComparison hero + Free vs Pro table on /upgrade.
+- Trial reminders cron 08:00 UTC: in-app notification + SMS at 3d, 1d, expired (once each).
+- Test accounts re-seeded (org_test_1) for testing. Testing iteration_2: backend 16/16, UI light/dark pass.

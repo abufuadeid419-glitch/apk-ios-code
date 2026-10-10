@@ -84,7 +84,7 @@ export function Btn({
   const { colors } = useTheme();
   const map = {
     primary: [colors.brandPrimary, colors.onBrandPrimary],
-    secondary: [colors.brandSecondary, colors.onBrandSecondary],
+    secondary: [colors.brandTertiary, colors.onBrandTertiary],
     danger: [colors.error, colors.onError],
     ghost: ["transparent", colors.brandPrimary],
   } as const;
@@ -101,8 +101,8 @@ export function Btn({
         {
           backgroundColor: bg,
           minHeight: small ? 40 : 52,
-          paddingHorizontal: small ? spacing.md : spacing.lg,
-          borderRadius: radius.md,
+          paddingHorizontal: small ? spacing.md : spacing.xl,
+          borderRadius: radius.pill,
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
@@ -149,13 +149,18 @@ export function IconBtn({ icon, onPress, testID, tone }: { icon: IconName; onPre
 
 // ---------------- Card ----------------
 export function Card({ children, style, onPress, testID }: { children: React.ReactNode; style?: ViewStyle; onPress?: () => void; testID?: string }) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const base: ViewStyle = {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
+    ...(scheme === "light"
+      ? Platform.OS === "web"
+        ? ({ boxShadow: "0px 2px 8px rgba(0,0,0,0.06)" } as ViewStyle)
+        : { shadowColor: colors.onSurface, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }
+      : {}),
   };
   if (!onPress) return <View testID={testID} style={[base, style]}>{children}</View>;
   return (
@@ -208,17 +213,18 @@ export function Header({ title, subtitle, right }: { title: string; subtitle?: s
   return (
     <View
       style={{
-        paddingTop: insets.top + spacing.sm,
+        paddingTop: insets.top + spacing.md,
         paddingHorizontal: spacing.lg,
         paddingBottom: spacing.md,
         backgroundColor: colors.surface,
-        borderBottomWidth: 1,
+        borderBottomWidth: 0,
         borderBottomColor: colors.divider,
         flexDirection: "row",
         alignItems: "center",
         gap: spacing.md,
       }}
     >
+      <View style={{ width: 4, alignSelf: "stretch", borderRadius: radius.pill, backgroundColor: colors.brandPrimary }} />
       <View style={{ flex: 1 }}>
         <T v="title" testID="screen-title">{title}</T>
         {!!subtitle && <T v="caption">{subtitle}</T>}
@@ -239,16 +245,20 @@ export function Stat({ label, value, icon, tone = "brand", testID }: { label: st
         flexBasis: "47%",
         flexGrow: 1,
         backgroundColor: colors.surfaceSecondary,
-        borderRadius: radius.lg,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderTopWidth: 3,
+        borderTopColor: c,
         padding: spacing.lg,
-        gap: spacing.sm,
+        gap: spacing.xs,
       }}
     >
-      <View style={{ width: 36, height: 36, borderRadius: radius.md, backgroundColor: colors.brandTertiary, alignItems: "center", justifyContent: "center" }}>
-        <Ionicons name={icon} size={20} color={c} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>
+        <Ionicons name={icon} size={18} color={c} />
+        <T v="caption" style={{ flex: 1 }} numberOfLines={1}>{label}</T>
       </View>
-      <T v="caption">{label}</T>
-      <T v="h2" style={{ color: c }} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
+      <T v="title" style={{ color: colors.onSurface }} numberOfLines={1} adjustsFontSizeToFit>{value}</T>
     </View>
   );
 }
@@ -283,7 +293,7 @@ export function ErrorBox({ message, onRetry }: { message: string; onRetry: () =>
 }
 
 // ---------------- Badge ----------------
-export function Badge({ text, tone = "brand", testID }: { text: string; tone?: "brand" | "success" | "warning" | "error"; testID?: string }) {
+export function Badge({ text, tone = "brand", testID }: { text: string; tone?: "brand" | "success" | "warning" | "error" | "pro"; testID?: string }) {
   const { colors } = useTheme();
   const bg = tone === "brand" ? colors.brandTertiary : colors[tone];
   const fg = tone === "brand" ? colors.onBrandTertiary : colors[`on${tone[0].toUpperCase()}${tone.slice(1)}` as keyof ThemeColors];

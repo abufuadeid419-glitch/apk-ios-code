@@ -33,45 +33,90 @@
 import { useMemo } from "react";
 import { Appearance, StyleSheet, useColorScheme } from "react-native";
 
+import { storage } from "@/src/utils/storage";
+
 export type ColorScheme = "light" | "dark";
 
 const light = {
-  surface: "#FFFFFF",
-  onSurface: "#191C1B",
-  surfaceSecondary: "#F4F7F5",
-  onSurfaceSecondary: "#4A524F",
-  surfaceTertiary: "#E9EBEA",
-  onSurfaceTertiary: "#3F4945",
-  surfaceInverse: "#191C1B",
-  onSurfaceInverse: "#FFFFFF",
-  brand: "#264E3F",
-  brandPrimary: "#264E3F",
+  surface: "#FAFAFA",
+  onSurface: "#18181B",
+  surfaceSecondary: "#FFFFFF",
+  onSurfaceSecondary: "#3F3F46",
+  surfaceTertiary: "#F4F4F5",
+  onSurfaceTertiary: "#27272A",
+  surfaceInverse: "#18181B",
+  onSurfaceInverse: "#FAFAFA",
+  brand: "#A13D2D",
+  brandPrimary: "#A13D2D",
   onBrandPrimary: "#FFFFFF",
-  brandSecondary: "#DCE9E2",
-  onBrandSecondary: "#153227",
-  brandTertiary: "#EFF5F1",
-  onBrandTertiary: "#264E3F",
-  success: "#2D684B",
+  brandSecondary: "#E8BAB3",
+  onBrandSecondary: "#3D140E",
+  brandTertiary: "#F5E1DE",
+  onBrandTertiary: "#7A2A1E",
+  success: "#2E7D32",
   onSuccess: "#FFFFFF",
-  warning: "#B07D10",
+  warning: "#C25700",
   onWarning: "#FFFFFF",
-  error: "#9C3737",
+  error: "#D32F2F",
   onError: "#FFFFFF",
-  info: "#3A5C61",
+  info: "#455A64",
   onInfo: "#FFFFFF",
-  border: "#E3E7E5",
-  borderStrong: "#BFC9C4",
-  divider: "#E8ECE9",
-  muted: "#707975",
+  border: "#E4E4E7",
+  borderStrong: "#D4D4D8",
+  divider: "#E4E4E7",
+  muted: "#71717A",
   onBrand: "#FFFFFF",
-  overlay: "rgba(25,28,27,0.45)",
+  overlay: "rgba(0,0,0,0.4)",
+  pro: "#B8912A",
+  onPro: "#1A1813",
 };
 
 export type ThemeColors = typeof light;
 
+const dark: ThemeColors = {
+  surface: "#121212",
+  onSurface: "#F5F5F5",
+  surfaceSecondary: "#1E1E1E",
+  onSurfaceSecondary: "#E0E0E0",
+  surfaceTertiary: "#2C2C2C",
+  onSurfaceTertiary: "#D4D4D4",
+  surfaceInverse: "#F5F5F5",
+  onSurfaceInverse: "#121212",
+  brand: "#E57373",
+  brandPrimary: "#E57373",
+  onBrandPrimary: "#1A0805",
+  brandSecondary: "#7A2A1E",
+  onBrandSecondary: "#F5E1DE",
+  brandTertiary: "#3D140E",
+  onBrandTertiary: "#F2C6BF",
+  success: "#81C784",
+  onSuccess: "#121212",
+  warning: "#FFB74D",
+  onWarning: "#121212",
+  error: "#EF8A8A",
+  onError: "#121212",
+  info: "#90A4AE",
+  onInfo: "#121212",
+  border: "#333333",
+  borderStrong: "#4F4F4F",
+  divider: "#2E2E2E",
+  muted: "#A1A1AA",
+  onBrand: "#121212",
+  overlay: "rgba(0,0,0,0.6)",
+  pro: "#F1D570",
+  onPro: "#1A1813",
+};
+
 export const defaultScheme = "light" satisfies ColorScheme;
 
-export const themes: { light: ThemeColors; dark?: ThemeColors } = { light };
+export const themes: { light: ThemeColors; dark?: ThemeColors } = { light, dark };
+
+// User preference: "system" follows the device; persisted across launches.
+export type ThemePref = "system" | "light" | "dark";
+export const THEME_PREF_KEY = "theme_pref";
+export function applyThemePref(p: ThemePref) {
+  setColorScheme(p === "system" ? null : p);
+}
 
 // In-app theme toggle, only after `dark` exists in `themes`. Call
 // setColorScheme("dark"), setColorScheme("light"), or setColorScheme(null) to
@@ -87,10 +132,11 @@ export function setColorScheme(scheme: ColorScheme | null) {
 // app ships: light only forces light; once `dark` exists the device decides.
 // Optional call because react-native-web does not implement it.
 setColorScheme?.(themes.dark ? null : defaultScheme);
+storage.getItem<ThemePref>(THEME_PREF_KEY, "system").then((p) => p && p !== "system" && applyThemePref(p));
 
 export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
-  const system = useColorScheme();
-  const scheme: ColorScheme = system && themes[system] ? system : defaultScheme;
+  const system = useColorScheme() as string | null | undefined;
+  const scheme: ColorScheme = system === "dark" && themes.dark ? "dark" : system === "light" ? "light" : defaultScheme;
   return { scheme, colors: themes[scheme] ?? themes.light };
 }
 

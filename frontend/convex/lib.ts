@@ -2,6 +2,9 @@ import { QueryCtx, MutationCtx } from "./_generated/server";
 
 // ---- id / time helpers (mirror server.py new_id / iso / gen_code) ----
 export const nowIso = () => new Date().toISOString();
+export const isExpired = (o: any) => !!o?.expires_at && Date.parse(o.expires_at) < Date.now();
+// Pro = paid licence or the 14-day free Pro trial, while not expired.
+export const isPro = (o: any) => !!o && o.status === "ACTIVE" && !isExpired(o) && ["TRIAL", "LICENSE"].includes(o.plan);
 export const newId = () => (globalThis.crypto as Crypto).randomUUID().replace(/-/g, "");
 export const genCode = (prefix = "") => {
   const seg = () => Math.random().toString(16).slice(2, 6).toUpperCase().padStart(4, "0");
@@ -55,7 +58,8 @@ export async function require(ctx: QueryCtx, token: string | undefined, roles: s
   if (key !== "DEVELOPER") {
     const org = await orgById(ctx, user.org_id);
     if (!org || org.status !== "ACTIVE") throw new Error("اشتراك المؤسسة غير فعال");
-    if (org.expires_at && Date.parse(org.expires_at) < Date.now()) throw new Error("انتهى اشتراك المؤسسة");
+    // Expired trial = Free plan (keeps working, Pro features locked); expired paid licence blocks.
+    if (org.plan !== "TRIAL" && isExpired(org)) throw new Error("انتهى اشتراك المؤسسة");
   }
   return user;
 }

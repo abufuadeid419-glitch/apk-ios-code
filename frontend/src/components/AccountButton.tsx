@@ -11,6 +11,8 @@ import { View } from "react-native";
 import { api, fmtDate, roleLabel } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { useApi, useMutate } from "@/src/hooks";
+import { ThemeToggle } from "@/src/components/ThemeToggle";
+import { isPro, planLabel } from "@/src/pro";
 import { spacing } from "@/src/theme";
 import { Badge, Btn, Card, IconBtn, Row, Sheet, T, useToast } from "@/src/ui";
 
@@ -71,11 +73,12 @@ export function AccountButton() {
           <T v="caption">{user?.email}</T>
           <Badge text={roleLabel(user)} />
         </Card>
+        <ThemeToggle />
         {org && (
           <Card style={{ gap: spacing.xs }}>
             <T v="label">{org.name}</T>
             <View style={{ flexDirection: "row", gap: spacing.sm }}>
-              <Badge text={org.plan === "TRIAL" ? "تجريبي" : "مرخّص"} tone={org.plan === "TRIAL" ? "warning" : "success"} />
+              <Badge testID="account-plan-badge" text={planLabel(org)} tone={isPro(org) ? "pro" : "warning"} />
               <Badge text={org.status === "ACTIVE" ? "فعّال" : "موقوف"} tone={org.status === "ACTIVE" ? "success" : "error"} />
             </View>
             <T v="caption">ينتهي الاشتراك: {fmtDate(org.expires_at)}</T>

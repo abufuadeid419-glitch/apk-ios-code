@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { action, internalAction, internalQuery, mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { sendSms, smsFailureMessage } from "./edge";
-import { OWNER, orgById, require } from "./lib";
+import { OWNER, isPro, orgById, require } from "./lib";
 
 // Evening SMS to each org owner: today's sales, collections and new debts.
 const TZ_OFFSET_MS = 3 * 3600 * 1000; // Syria (UTC+3)
@@ -35,7 +35,7 @@ async function summarize(ctx: any, org: any) {
   return { phone, text };
 }
 
-const isLive = (o: any) => o.status === "ACTIVE" && (!o.expires_at || Date.parse(o.expires_at) > Date.now());
+const isLive = isPro; // daily summary is a Pro feature
 
 export const collectSummaries = internalQuery({
   args: {},

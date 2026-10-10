@@ -36,7 +36,7 @@ export function RoleTabs({ tabs, tourKey }: { tabs: TabDef[]; tourKey: string })
         tabBarActiveTintColor: colors.brandPrimary,
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.surfaceSecondary,
           borderTopColor: colors.border,
           ...(Platform.OS === "web" ? { height: 64 } : {}),
         },

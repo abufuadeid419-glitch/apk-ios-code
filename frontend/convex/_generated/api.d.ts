@@ -21,6 +21,7 @@ import type * as http from "../http.js";
 import type * as lib from "../lib.js";
 import type * as migrate from "../migrate.js";
 import type * as notifications from "../notifications.js";
+import type * as proFeatures from "../proFeatures.js";
 import type * as products from "../products.js";
 import type * as purchases from "../purchases.js";
 import type * as returns from "../returns.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   lib: typeof lib;
   migrate: typeof migrate;
   notifications: typeof notifications;
+  proFeatures: typeof proFeatures;
   products: typeof products;
   purchases: typeof purchases;
   returns: typeof returns;

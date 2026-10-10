@@ -8,6 +8,7 @@ import {
   cleanAll,
   genCode,
   getUser,
+  isPro,
   newId,
   nowIso,
   orgById,
@@ -42,7 +43,7 @@ export const invite = mutation({
     const invites = (await ctx.db.query("invitations").withIndex("by_org", (q) => q.eq("org_id", user.org_id!)).collect()).filter(
       (i) => !i.used,
     ).length;
-    if (employees + invites >= (org?.max_employees ?? 0)) throw new Error("تم الوصول للحد الأقصى من الموظفين — قم بالترقية إلى Pro لإضافة المزيد");
+    if (employees + invites >= (isPro(org) ? org?.max_employees ?? 0 : 1)) throw new Error("تم الوصول للحد الأقصى من الموظفين — قم بالترقية إلى Pro لإضافة المزيد");
     const doc = {
       id: newId(),
       org_id: user.org_id!,

@@ -18,6 +18,7 @@ import {
   require,
   round2,
   sumBy,
+  isPro,
 } from "./lib";
 
 const PROFILE_FIELDS = ["name", "phone", "email", "address", "tax_no", "cr_no", "invoice_footer", "phone_country_code"];
@@ -448,7 +449,7 @@ export const statsReports = query({
     const period = p || "day";
     if (!["day", "week", "month"].includes(period)) throw new Error("فترة غير صالحة");
     // Weekly / monthly reports are a Pro (paid licence) feature; trial orgs get daily only.
-    if (period !== "day" && (await orgById(ctx, user.org_id!))?.plan === "TRIAL") return { period, rows: [], totals: {}, locked: true };
+    if (period !== "day" && !isPro(await orgById(ctx, user.org_id!))) return { period, rows: [], totals: {}, locked: true };
     const n = period === "day" ? 7 : period === "week" ? 8 : 6;
     const today = new Date();
     const keys: string[] = [];

@@ -147,7 +147,8 @@ export function homeFor(u: User | null | undefined): string {
   if (!u.role) return "activate";
   if (u.role === "DEVELOPER") return "dev";
   const org = u.org;
-  if (!org || org.status !== "ACTIVE" || new Date(org.expires_at) < new Date()) return "blocked";
+  // An expired trial falls back to the Free plan (not blocked); expired paid licences block.
+  if (!org || org.status !== "ACTIVE" || (org.plan !== "TRIAL" && new Date(org.expires_at) < new Date())) return "blocked";
   if (u.role === "OWNER") return "owner";
   return u.employee_type === "ACCOUNTANT" ? "acct" : "dist";
 }

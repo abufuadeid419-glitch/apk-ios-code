@@ -14,7 +14,8 @@ import { PendingDeliveries } from "@/src/components/PendingDeliveries";
 import { AgentStock } from "@/src/components/StockRequests";
 import { SyncBanner } from "@/src/components/SyncBanner";
 import { MyTargetCard, SalesTargetsCard } from "@/src/components/SalesTargets";
-import { TrialCountdown } from "@/src/components/TrialCountdown";
+import { ProBanner } from "@/src/components/ProBanner";
+import { ProLock } from "@/src/components/ProLock";
 import { useApi, useBottomChrome } from "@/src/hooks";
 import { queryClient } from "@/src/query-client";
 import { spacing, useTheme } from "@/src/theme";
@@ -45,7 +46,7 @@ export default function Overview() {
           <ErrorBox message={(stats.error as Error).message} onRetry={stats.refetch} />
         ) : (
           <>
-            {isOwner && <TrialCountdown />}
+            {isOwner && <ProBanner />}
             {isOwner && <OwnerOnboarding />}
             {isAgent && <LocationCard />}
             {isAgent && <MyTargetCard />}
@@ -79,8 +80,12 @@ export default function Overview() {
               </Section>
             )}
 
-            {!isAgent && <SalesTargetsCard />}
-            {!isAgent && <Leaderboard />}
+            {!isAgent && (
+              <ProLock testID="lock-targets" feature="أهداف المبيعات ولوحة المتصدرين">
+                <SalesTargetsCard />
+                <Leaderboard />
+              </ProLock>
+            )}
 
             <Section title="آخر الفواتير">
               <Card style={{ padding: 0, overflow: "hidden" }}>

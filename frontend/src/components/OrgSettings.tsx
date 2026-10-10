@@ -6,6 +6,7 @@ import { Platform, Switch, View } from "react-native";
 import { api, fmtDate } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { useApi, useMutate } from "@/src/hooks";
+import { ProLock } from "@/src/components/ProLock";
 import { spacing, useTheme } from "@/src/theme";
 import { Badge, Btn, Card, Field, Section, T, useToast } from "@/src/ui";
 
@@ -39,6 +40,45 @@ function DailySmsSection() {
         </Card>
       )}
       <Btn testID="daily-sms-test-button" small variant="secondary" icon="send-outline" title="أرسل ملخص اليوم الآن" loading={test.isPending} disabled={!q.data?.phone} onPress={() => test.mutate({})} />
+    </Section>
+  );
+}
+
+// Automatic SMS debt reminders: owner enables and picks the period; each debtor gets one SMS per period.
+const PERIODS = [7, 14, 30] as const;
+function DebtSmsSection() {
+  const { colors } = useTheme();
+  const q = useApi<{ enabled: boolean; days: number; eligible: number; sample: string }>("/org/debt-sms");
+  const save = useMutate("PUT", "/org/debt-sms", "تم حفظ إعداد تذكير الديون");
+  const enabled = q.data?.enabled ?? false;
+  const days = q.data?.days ?? 14;
+  return (
+    <Section title="تذكير الديون عبر SMS">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        <View style={{ flex: 1 }}>
+          <T v="label">إرسال تذكير تلقائي للعملاء المدينين</T>
+          <T v="caption">رسالة SMS واحدة لكل عميل عليه رصيد مستحق، مرة كل {days} يوماً (العملاء الذين لديهم رقم هاتف)</T>
+        </View>
+        <Switch
+          testID="debt-sms-switch"
+          value={enabled}
+          disabled={q.isLoading || save.isPending}
+          onValueChange={(v) => save.mutate({ enabled: v, days })}
+          trackColor={{ true: colors.brandPrimary, false: colors.border }}
+          thumbColor={colors.surfaceSecondary}
+        />
+      </View>
+      <View style={{ flexDirection: "row", gap: spacing.sm }}>
+        {PERIODS.map((d) => (
+          <Btn key={d} testID={`debt-sms-days-${d}`} small style={{ flex: 1 }} variant={days === d ? "primary" : "secondary"} title={`كل ${d} يوم`} disabled={save.isPending} onPress={() => save.mutate({ enabled, days: d })} />
+        ))}
+      </View>
+      {!!q.data && (
+        <Card testID="debt-sms-preview" style={{ gap: spacing.xs, backgroundColor: colors.surfaceTertiary }}>
+          <T v="caption" testID="debt-sms-eligible">مستحق للتذكير الآن: {q.data.eligible} عميل · يُرسل يومياً الساعة 10:00 ص</T>
+          <T>{q.data.sample}</T>
+        </Card>
+      )}
     </Section>
   );
 }
@@ -92,7 +132,12 @@ export function OrgSettings() {
         <Btn testID="save-currency-button" small title="حفظ العملات" icon="checkmark" loading={saveCur.isPending} onPress={() => saveCur.mutate({ ...cur, exchange_rate: +cur.exchange_rate || 0 })} />
       </Section>
 
-      <DailySmsSection />
+      <ProLock testID="lock-daily-sms" feature="ملخص SMS اليومي">
+        <DailySmsSection />
+      </ProLock>
+      <ProLock testID="lock-debt-sms" feature="تذكير الديون التلقائي عبر SMS">
+        <DebtSmsSection />
+      </ProLock>
 
       <Section title="النسخ الاحتياطي">
         <T v="caption">صدّر جميع بيانات المؤسسة (المنتجات، العملاء، الفواتير، التحصيلات، المشتريات...) كملف JSON.</T>

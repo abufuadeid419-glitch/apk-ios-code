@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { useEffect, useState } from "react";
 import { Linking, Platform, View } from "react-native";
 
@@ -81,18 +82,34 @@ export function DocActions({ make, title, phone, waText, waTitle, idPrefix }: { 
       await printReceipt(make());
     } catch {}
   };
+  // PDF via the phone share sheet (WhatsApp). The customer's number is copied first so it
+  // can be pasted in WhatsApp's search; on web we fall back to a WhatsApp text message.
+  const sharePdfWhatsApp = async () => {
+    const cc = org.data?.phone_country_code;
+    if (Platform.OS === "web") return openWhatsApp(phone, waText(), cc).catch(() => toast("تعذر فتح واتساب", "error"));
+    try {
+      if (phone) {
+        await Clipboard.setStringAsync(`+${normPhone(phone, cc)}`);
+        toast(`تم نسخ رقم العميل +${normPhone(phone, cc)} — اختر واتساب ثم الصق الرقم`);
+      }
+      await shareReceipt(make(), title);
+    } catch (e: any) {
+      toast(e?.message ?? "تعذر إنشاء الملف", "error");
+    }
+  };
   return (
     <View style={{ gap: spacing.sm }}>
       {btAvailable && <BluetoothPrint make={make} />}
+      <Btn testID={`${idPrefix}-whatsapp-pdf-button`} small icon="logo-whatsapp" title={phone ? `إرسال PDF عبر واتساب إلى ${phone}` : "إرسال PDF عبر واتساب"} onPress={sharePdfWhatsApp} />
       <View style={{ flexDirection: "row", gap: spacing.sm }}>
         <Btn testID={`${idPrefix}-share-pdf-button`} style={{ flex: 1 }} small variant={btAvailable ? "secondary" : "primary"} title={Platform.OS === "web" ? "PDF / حفظ" : "PDF / مشاركة"} icon="document-text-outline" onPress={share} />
         <Btn testID={`${idPrefix}-print-button`} style={{ flex: 1 }} small variant="secondary" title="طباعة" icon="print-outline" onPress={print} />
       </View>
-      <Btn testID={`${idPrefix}-whatsapp-button`} small variant="secondary" icon="logo-whatsapp" title={phone ? `${waTitle} إلى ${phone}` : waTitle} onPress={() => openWhatsApp(phone, waText(), org.data?.phone_country_code).catch(() => toast("تعذر فتح واتساب", "error"))} />
+      <Btn testID={`${idPrefix}-whatsapp-button`} small variant="ghost" icon="chatbubble-outline" title={phone ? `${waTitle} (نص) إلى ${phone}` : `${waTitle} (نص)`} onPress={() => openWhatsApp(phone, waText(), org.data?.phone_country_code).catch(() => toast("تعذر فتح واتساب", "error"))} />
       <T v="caption" style={{ textAlign: "center" }} testID={`${idPrefix}-paper-size`}>
         مقاس الطباعة: ورق حراري 80 مم
         {btPlatform && !btAvailable ? " · الطباعة المباشرة عبر البلوتوث متاحة في التطبيق المثبت" : ""}
-        {Platform.OS !== "web" ? " · لإرسال الملف عبر واتساب اختر «PDF / مشاركة» ثم واتساب" : ""}
+        {Platform.OS !== "web" ? " · يُفتح خيار المشاركة: اختر واتساب ثم العميل" : ""}
       </T>
     </View>
   );

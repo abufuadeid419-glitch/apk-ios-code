@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { View } from "react-native";
 
 import { useAuth } from "@/src/auth";
+import { isPro } from "@/src/pro";
 import { spacing, useTheme } from "@/src/theme";
 import { Btn, Card, Ionicons, T } from "@/src/ui";
 
@@ -12,7 +13,7 @@ export function ProUpsell({ reason, testID = "pro-upsell-card" }: { reason: stri
   const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
-  if (user?.org?.plan !== "TRIAL") return null;
+  if (isPro(user?.org)) return null;
   return (
     <Card testID={testID} style={{ gap: spacing.md, backgroundColor: colors.brandTertiary, borderColor: colors.brandSecondary }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.sm }}>

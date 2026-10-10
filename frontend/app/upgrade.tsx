@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { fmtDate, money } from "@/src/api";
 import { useAuth } from "@/src/auth";
 import { useApi, useMutate } from "@/src/hooks";
+import { ProComparison } from "@/src/components/ProComparison";
+import { planLabel } from "@/src/pro";
 import { spacing, useTheme } from "@/src/theme";
 import { Badge, Btn, Card, Empty, Field, Header, IconBtn, Ionicons, Loading, Section, Segments, Sheet, T, useToast } from "@/src/ui";
 
@@ -51,9 +53,10 @@ export default function Upgrade() {
         contentContainerStyle={{ padding: spacing.lg, gap: spacing.xl, paddingBottom: insets.bottom + spacing.xl }}
         refreshControl={<RefreshControl refreshing={plans.isRefetching} onRefresh={() => { plans.refetch(); reqs.refetch(); refresh(); }} tintColor={colors.brandPrimary} />}
       >
+        <ProComparison />
         <Card testID="current-plan-card" style={{ gap: spacing.xs, backgroundColor: colors.brandTertiary, borderColor: colors.brandSecondary }}>
           <T v="caption">خطتك الحالية</T>
-          <T v="h2">{org?.plan === "TRIAL" ? "تجربة مجانية" : org?.plan_name ?? "ترخيص"}</T>
+          <T v="h2">{org?.plan === "TRIAL" ? planLabel(org) : org?.plan_name ?? "Pro"}</T>
           <T v="caption">حتى {org?.max_employees} موظفين · ينتهي {org ? fmtDate(org.expires_at) : ""}</T>
         </Card>
 

@@ -10,4 +10,10 @@ crons.weekly("weekly debt digest", { dayOfWeek: "sunday", hourUTC: 6, minuteUTC:
 // Every day 18:00 UTC (21:00 Syria): SMS each owner today's sales, collections and new debts.
 crons.daily("daily sms summary", { hourUTC: 18, minuteUTC: 0 }, internal.dailySms.sendAll);
 
+// Every day 07:00 UTC (10:00 Syria): automatic SMS debt reminders (Pro orgs that enabled it).
+crons.daily("debt sms reminders", { hourUTC: 7, minuteUTC: 0 }, internal.proFeatures.sendDebtReminders);
+
+// Every day 08:00 UTC: Pro trial reminders (3 days left, 1 day left, expired).
+crons.daily("pro trial reminders", { hourUTC: 8, minuteUTC: 0 }, internal.proFeatures.sendTrialReminders);
+
 export default crons;
